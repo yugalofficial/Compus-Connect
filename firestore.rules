@@ -1,0 +1,266 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSuperAdminEmail() {
+      return isAuthenticated() &&
+        request.auth.token.email == "yugalofficial63@gmail.com" &&
+        request.auth.token.email_verified == true;
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSuperAdminEmail() ||
+        (isAuthenticated() && userExists() && userData().role == 'admin' && userData().status == 'approved');
+    }
+
+    function isApproved() {
+      return isAdmin() || (isAuthenticated() && userExists() && userData().status == 'approved');
+    }
+
+    function isOrganizer() {
+      return isAdmin() || (isAuthenticated() && userExists() && userData().role == 'organizer' && userData().status == 'approved');
+    }
+
+    function isCanteen() {
+      return isAdmin() || (isAuthenticated() && userExists() && userData().role == 'canteen' && userData().status == 'approved');
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() <= 160 && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.size() <= 64 && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}.*Z?)?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             isValidEmail(data.email) &&
+             data.role in ['student', 'organizer', 'admin', 'canteen'] &&
+             (!('status' in data) || data.status in ['pending', 'approved', 'rejected', 'suspended']) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+             (!('college' in data) || (data.college is string && data.college.size() <= 150)) &&
+             (!('course' in data) || (data.course is string && data.course.size() <= 150)) &&
+             (!('organisation' in data) || (data.organisation is string && data.organisation.size() <= 150)) &&
+             (!('vendorName' in data) || (data.vendorName is string && data.vendorName.size() <= 150)) &&
+             (!('upiId' in data) || (data.upiId is string && data.upiId.size() <= 120)) &&
+             (!('razorpayId' in data) || (data.razorpayId is string && data.razorpayId.size() <= 120)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 700000)) &&
+             (!('points' in data) || data.points is number);
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll(['title', 'description', 'date', 'venue', 'organizerId', 'category', 'type', 'registrationLimit', 'registeredCount', 'status']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.venue is string && data.venue.size() > 0 && data.venue.size() <= 200 &&
+             data.organizerId is string && data.organizerId.size() <= 128 &&
+             data.category is string && data.category.size() <= 60 &&
+             data.type in ['free', 'paid'] &&
+             data.registrationLimit is number && data.registrationLimit > 0 &&
+             data.registeredCount is number && data.registeredCount >= 0 &&
+             data.status in ['upcoming', 'ongoing', 'completed'] &&
+             (!('fee' in data) || data.fee is number) &&
+             (!('couponCost' in data) || data.couponCost is number) &&
+             (!('maxCoupons' in data) || data.maxCoupons is number) &&
+             (!('posterUrl' in data) || (data.posterUrl is string && data.posterUrl.size() <= 800000));
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll(['userId', 'eventId', 'status', 'attended', 'couponRedeemed']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.eventId is string && data.eventId.size() <= 128 &&
+             data.status in ['pending', 'confirmed', 'rejected'] &&
+             data.attended is bool &&
+             data.couponRedeemed is bool &&
+             (!('paymentScreenshot' in data) || (data.paymentScreenshot is string && data.paymentScreenshot.size() <= 800000));
+    }
+
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['userId', 'eventId', 'scanTime']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.eventId is string && data.eventId.size() <= 128 &&
+             isValidDateString(data.scanTime);
+    }
+
+    function isValidCoupon(data) {
+      return data.keys().hasAll(['userId', 'eventId', 'redeemedAt', 'vendorId']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.eventId is string && data.eventId.size() <= 128 &&
+             isValidDateString(data.redeemedAt) &&
+             data.vendorId is string && data.vendorId.size() <= 128;
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll(['eventId', 'organizerId', 'amount', 'status', 'requestedAt']) &&
+             data.eventId is string && data.eventId.size() <= 128 &&
+             data.organizerId is string && data.organizerId.size() <= 128 &&
+             data.amount is number && data.amount >= 0 &&
+             data.status in ['pending', 'approved', 'paid', 'rejected'] &&
+             isValidDateString(data.requestedAt) &&
+             (!('paymentScreenshot' in data) || (data.paymentScreenshot is string && data.paymentScreenshot.size() <= 800000));
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'title', 'message', 'type', 'read']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.message is string && data.message.size() <= 1000 &&
+             data.type is string && data.type.size() <= 60 &&
+             data.read is bool;
+    }
+
+    function isValidSociety(data) {
+      return data.keys().hasAll(['name', 'description', 'category', 'organizerId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 150 &&
+             data.description is string && data.description.size() <= 3000 &&
+             data.category is string && data.category.size() <= 60 &&
+             data.organizerId is string && data.organizerId.size() <= 128;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users: Super Admin has full CRUD; owners can read/create own pending/student doc and edit non-privileged fields; organizers/canteen can read profiles for event/coupon logs
+    match /users/{userId} {
+      allow get: if isAuthenticated() && (isOwner(userId) || isAdmin() || isOrganizer() || isCanteen());
+      allow list: if isAdmin() || isOrganizer() || isCanteen();
+      allow create: if isValidId(userId) && isValidUser(request.resource.data) && (
+        isAdmin() ||
+        (isOwner(userId) && isSuperAdminEmail() && request.resource.data.role == 'admin' && request.resource.data.status == 'approved') ||
+        (isOwner(userId) && request.resource.data.uid == request.auth.uid && request.resource.data.role in ['student', 'organizer', 'canteen'] && request.resource.data.status in ['pending', 'approved'])
+      );
+      allow update: if isValidId(userId) && isValidUser(request.resource.data) && (
+        isAdmin() ||
+        (isOwner(userId) && isSuperAdminEmail() && request.resource.data.role == 'admin' && request.resource.data.status == 'approved') ||
+        (isOwner(userId) &&
+          request.resource.data.uid == resource.data.uid &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.status == resource.data.status &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'college', 'course', 'interests', 'photoURL', 'followedSocieties', 'organisation', 'vendorName', 'upiId', 'razorpayId', 'societyId', 'updatedAt'])) ||
+        (isOrganizer() &&
+          request.resource.data.uid == resource.data.uid &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.status == resource.data.status &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points', 'updatedAt']) &&
+          request.resource.data.points is number &&
+          request.resource.data.points >= resource.data.points &&
+          request.resource.data.points <= resource.data.points + 100)
+      );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // Platform Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Events
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isValidId(eventId) && isOrganizer() && isValidEvent(request.resource.data) &&
+        (request.resource.data.organizerId == request.auth.uid || isAdmin());
+      allow update: if isValidId(eventId) && isValidEvent(request.resource.data) && (
+        isAdmin() ||
+        (isOrganizer() && resource.data.organizerId == request.auth.uid && request.resource.data.organizerId == resource.data.organizerId) ||
+        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredCount']) && request.resource.data.registeredCount == resource.data.registeredCount + 1)
+      );
+      allow delete: if isValidId(eventId) && (isAdmin() || (isOrganizer() && resource.data.organizerId == request.auth.uid));
+    }
+
+    // Registrations
+    match /registrations/{regId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isOrganizer() || isCanteen());
+      allow create: if isValidId(regId) && isApproved() && (isOwner(request.resource.data.userId) || isAdmin()) && isValidRegistration(request.resource.data);
+      allow update: if isValidId(regId) && isValidRegistration(request.resource.data) && (
+        isAdmin() ||
+        (isOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paymentId', 'transactionId', 'paymentScreenshot'])) ||
+        (isOrganizer() && (get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.organizerId == request.auth.uid)) ||
+        (isCanteen() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['couponRedeemed', 'couponRedeemedAt']))
+      );
+      allow delete: if isValidId(regId) && isAdmin();
+    }
+
+    // Attendance Logs
+    match /attendance/{attId} {
+      allow read: if isOrganizer() || isAdmin();
+      allow create: if isValidId(attId) && isOrganizer() && isValidAttendance(request.resource.data);
+      allow update, delete: if isValidId(attId) && isAdmin();
+    }
+
+    // Coupon Redemption Logs
+    match /coupons/{couponId} {
+      allow read: if isCanteen() || isOrganizer() || isAdmin();
+      allow create: if isValidId(couponId) && isCanteen() && isValidCoupon(request.resource.data);
+      allow update, delete: if isValidId(couponId) && isAdmin();
+    }
+
+    // Canteen Payout Requests
+    match /payments/{payId} {
+      allow read: if isOrganizer() || isCanteen() || isAdmin();
+      allow create: if isValidId(payId) && isCanteen() && isValidPayment(request.resource.data);
+      allow update: if isValidId(payId) && isValidPayment(request.resource.data) && (
+        isAdmin() ||
+        (isOrganizer() && resource.data.organizerId == request.auth.uid) ||
+        (isCanteen() && resource.data.vendorId == request.auth.uid && request.resource.data.status == 'pending')
+      );
+      allow delete: if isValidId(payId) && isAdmin();
+    }
+
+    // Societies
+    match /societies/{socId} {
+      allow read: if true;
+      allow create: if isValidId(socId) && isOrganizer() && isValidSociety(request.resource.data);
+      allow update: if isValidId(socId) && isValidSociety(request.resource.data) && (
+        isAdmin() ||
+        (isOrganizer() && resource.data.organizerId == request.auth.uid) ||
+        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']))
+      );
+      allow delete: if isValidId(socId) && isAdmin();
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isValidId(notifId) && isAuthenticated() && isValidNotification(request.resource.data);
+      allow update: if isValidId(notifId) && isAuthenticated() && isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isValidId(notifId) && isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+    }
+  }
+}

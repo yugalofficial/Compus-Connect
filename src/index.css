@@ -1,0 +1,109 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border-subtle: var(--border-subtle);
+}
+
+:root,
+.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --primary: #2563eb;
+  --secondary: #475569;
+  --accent: #d97706;
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.dark {
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --surface: #111827;
+  --surface-muted: #1e293b;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --primary: #3b82f6;
+  --secondary: #94a3b8;
+  --accent: #f59e0b;
+}
+
+.neon {
+  --background: #050507;
+  --foreground: #f8fafc;
+  --surface: #0c0e14;
+  --surface-muted: #141824;
+  --border-subtle: rgba(0, 255, 136, 0.22);
+  --primary: #00d97e;
+  --secondary: #94a3b8;
+  --accent: #eab308;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Crisp adaptive surface panels with WCAG AA contrast across light, dark, and neon */
+.glass {
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.dark .glass {
+  background-color: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.neon .glass {
+  background-color: rgba(12, 14, 20, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 0 20px rgba(0, 217, 126, 0.08);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.three-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
