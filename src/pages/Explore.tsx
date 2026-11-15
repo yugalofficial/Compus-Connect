@@ -47,17 +47,17 @@ export default function Explore() {
   });
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <header className="pt-2">
-        <h1 className="text-3xl font-extrabold tracking-tight mb-4">Explore Events</h1>
+    <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto space-y-6">
+      <header>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-4">Explore Events</h1>
 
-        <div className="flex gap-3">
-          <div className="flex-1 glass rounded-xl px-4 flex items-center gap-3">
+        <div className="flex gap-2.5 sm:gap-3">
+          <div className="flex-1 min-w-0 glass rounded-xl px-3.5 sm:px-4 flex items-center gap-2.5 sm:gap-3">
             <Search className="text-secondary w-4 h-4 shrink-0" />
             <input
               type="text"
               placeholder="Search events, venues, or categories..."
-              className="bg-transparent w-full h-11 text-sm focus:outline-none"
+              className="bg-transparent w-full min-w-0 h-11 text-sm focus:outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -91,12 +91,12 @@ export default function Explore() {
         </div>
       )}
 
-      <div className="flex gap-1.5 p-1 glass rounded-xl overflow-x-auto no-scrollbar w-full sm:w-fit">
+      <div className="flex gap-1.5 p-1 glass rounded-xl overflow-x-auto no-scrollbar max-w-full sm:w-fit">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+            className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
               selectedCategory === cat ? 'bg-primary text-white' : 'text-secondary hover:text-foreground'
             }`}
           >

@@ -668,18 +668,18 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto">
       {/* Header */}
-      <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
+      <header className="mb-7 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="min-w-0">
           <p className="text-xs font-semibold text-primary mb-1">Super Admin Console</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Platform Administration</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">Platform Administration</h1>
           <p className="text-secondary text-sm mt-1">
             Real-time sync across all Students, Organisers, Societies, Events, Passes & Canteen Payouts.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2.5 shrink-0">
           <button
             onClick={() => setShowCreateUser(true)}
             className="px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap"
@@ -698,7 +698,7 @@ export default function AdminDashboard() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-1.5 p-1 rounded-2xl glass mb-8 overflow-x-auto no-scrollbar">
+      <div className="flex gap-1.5 p-1 rounded-2xl glass mb-7 sm:mb-8 overflow-x-auto no-scrollbar max-w-full">
         {(
           [
             { id: 'overview', label: 'Overview', icon: Shield },
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 whitespace-nowrap shrink-0 transition-colors ${
+            className={`px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 whitespace-nowrap shrink-0 transition-colors ${
               activeTab === tab.id ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-foreground'
             }`}
           >
@@ -725,37 +725,37 @@ export default function AdminDashboard() {
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-secondary mb-2">Total Profiles</p>
-              <p className="text-3xl font-extrabold tabular-nums">{users.length}</p>
+        <div className="space-y-8 min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-secondary mb-2 truncate">Total Profiles</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">{users.length}</p>
             </div>
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-amber-500 mb-2">Pending Users</p>
-              <p className="text-3xl font-extrabold tabular-nums text-amber-500">{pendingUsers.length}</p>
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-amber-500 mb-2 truncate">Pending Users</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums text-amber-500 truncate">{pendingUsers.length}</p>
             </div>
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-secondary mb-2">Campus Events</p>
-              <p className="text-3xl font-extrabold tabular-nums">{events.length}</p>
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-secondary mb-2 truncate">Campus Events</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">{events.length}</p>
             </div>
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-secondary mb-2">Event Passes</p>
-              <p className="text-3xl font-extrabold tabular-nums">{registrations.length}</p>
-              <p className="text-[11px] text-secondary mt-1 tabular-nums">
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-secondary mb-2 truncate">Event Passes</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">{registrations.length}</p>
+              <p className="text-[11px] text-secondary mt-1 tabular-nums truncate">
                 {confirmedRegsCount} confirmed · {attendedRegsCount} attended
               </p>
             </div>
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-secondary mb-2">Societies</p>
-              <p className="text-3xl font-extrabold tabular-nums">{societies.length}</p>
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-secondary mb-2 truncate">Societies</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">{societies.length}</p>
             </div>
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-medium text-secondary mb-2">Payout Volume</p>
-              <p className="text-3xl font-extrabold tabular-nums">
+            <div className="glass rounded-2xl p-4 sm:p-5 min-w-0">
+              <p className="text-xs font-medium text-secondary mb-2 truncate">Payout Volume</p>
+              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">
                 ₹{payments.reduce((acc, p) => acc + (p.amount || 0), 0).toLocaleString()}
               </p>
-              <p className="text-[11px] text-secondary mt-1 tabular-nums">
+              <p className="text-[11px] text-secondary mt-1 tabular-nums truncate">
                 {pendingPaymentsCount} pending requests
               </p>
             </div>
@@ -842,9 +842,9 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 glass rounded-2xl p-6">
+            <div className="lg:col-span-2 glass rounded-2xl p-5 sm:p-6 min-w-0 overflow-hidden">
               <h3 className="text-sm font-bold mb-6">Events by Category</h3>
-              <div className="h-64 w-full">
+              <div className="h-64 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={eventCategoryBars}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
@@ -859,9 +859,9 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="glass rounded-2xl p-6">
+            <div className="glass rounded-2xl p-5 sm:p-6 min-w-0 overflow-hidden">
               <h3 className="text-sm font-bold mb-6">Profile Breakdown</h3>
-              <div className="h-52 w-full">
+              <div className="h-52 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={roleDistribution} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={4} dataKey="value">
@@ -927,9 +927,9 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="glass rounded-2xl overflow-hidden">
+          <div className="glass rounded-2xl overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[680px] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle text-xs font-semibold text-secondary">
                     <th className="py-3.5 px-4">User Profile</th>
@@ -1114,16 +1114,16 @@ export default function AdminDashboard() {
                 const redeemed = eventRegs.filter((r) => r.couponRedeemed).length;
 
                 return (
-                  <div key={event.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4">
-                    <div>
+                  <div key={event.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4 min-w-0">
+                    <div className="min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-bold text-base line-clamp-1">{event.title}</h4>
+                        <h4 className="font-bold text-base line-clamp-1 min-w-0">{event.title}</h4>
                         <span className="text-xs font-semibold capitalize text-primary shrink-0">{event.status}</span>
                       </div>
-                      <p className="text-xs text-secondary mb-2">
+                      <p className="text-xs text-secondary mb-2 break-words">
                         {event.category} · {event.date ? format(new Date(event.date), 'dd MMM yyyy') : 'TBA'} · {event.venue}
                       </p>
-                      <div className="text-xs text-secondary space-y-1 mb-3 p-3 rounded-xl bg-background/60 border border-border-subtle">
+                      <div className="text-xs text-secondary space-y-1 mb-3 p-3 rounded-xl bg-background/60 border border-border-subtle min-w-0">
                         <p className="truncate">
                           <span className="font-semibold text-foreground">Organiser:</span>{' '}
                           {org ? `${org.name} (${org.email})` : event.organizerId}
@@ -1132,9 +1132,9 @@ export default function AdminDashboard() {
                           <button
                             type="button"
                             onClick={() => navigate(`/society/${soc.id}`)}
-                            className="text-primary font-semibold hover:underline flex items-center gap-1"
+                            className="text-primary font-semibold hover:underline inline-flex items-center gap-1 max-w-full min-w-0"
                           >
-                            {soc.name} <ExternalLink size={11} />
+                            <span className="truncate">{soc.name}</span> <ExternalLink size={11} className="shrink-0" />
                           </button>
                         )}
                       </div>
@@ -1210,9 +1210,9 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="glass rounded-2xl overflow-hidden">
+          <div className="glass rounded-2xl overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[700px] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle text-xs font-semibold text-secondary">
                     <th className="py-3.5 px-4">Student</th>
@@ -1349,8 +1349,8 @@ export default function AdminDashboard() {
               const owner = userMap[soc.organizerId];
               const hostedCount = (eventsByOrganizer[soc.organizerId] || []).length;
               return (
-                <div key={soc.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4">
-                  <div>
+                <div key={soc.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4 min-w-0">
+                  <div className="min-w-0">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
                         {soc.logoUrl ? (
@@ -1411,10 +1411,10 @@ export default function AdminDashboard() {
                 const vendor = userMap[payment.vendorId];
                 const ev = eventMap[payment.eventId];
                 return (
-                  <div key={payment.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4">
-                    <div>
+                  <div key={payment.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4 min-w-0">
+                    <div className="min-w-0">
                       <div className="flex justify-between items-start gap-2 mb-2">
-                        <h4 className="font-bold text-sm">{ev?.title || payment.eventTitle}</h4>
+                        <h4 className="font-bold text-sm min-w-0 break-words">{ev?.title || payment.eventTitle}</h4>
                         <span
                           className={`text-xs font-semibold capitalize ${
                             payment.status === 'paid'
@@ -1646,7 +1646,7 @@ export default function AdminDashboard() {
                 />
               </div>
               {newUserForm.role === 'student' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-secondary block mb-1">College</label>
                     <input
@@ -1679,7 +1679,7 @@ export default function AdminDashboard() {
                 </div>
               )}
               {newUserForm.role === 'canteen' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-secondary block mb-1">Vendor Name</label>
                     <input
@@ -1737,7 +1737,7 @@ export default function AdminDashboard() {
                   className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3 text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-secondary block mb-1">Role</label>
                   <select
@@ -1765,7 +1765,7 @@ export default function AdminDashboard() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-secondary block mb-1">Phone</label>
                   <input
@@ -1786,7 +1786,7 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-secondary block mb-1">College</label>
                   <input
@@ -1806,7 +1806,7 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-secondary block mb-1">Organisation</label>
                   <input

@@ -208,11 +208,11 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         <div
           className={`glass rounded-2xl p-4 sm:p-5 border border-primary/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${className}`}
         >
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
               <Smartphone size={22} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h4 className="font-bold text-sm sm:text-base">Install Campus Connect Mobile App</h4>
               <p className="text-xs text-secondary">
                 Fast full-screen launch, offline pass access & QR scanning on Android and iOS.
@@ -222,7 +222,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           <button
             type="button"
             onClick={handleInstallClick}
-            className="px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shrink-0"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shrink-0"
           >
             <Download size={16} />
             {buttonLabel}
@@ -239,11 +239,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         type="button"
         onClick={handleInstallClick}
         aria-label="Install Campus Connect App"
-        className={`h-10 px-3 rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors ${className}`}
+        title={buttonLabel}
+        className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors ${className}`}
       >
         <Download size={15} />
         <span className="hidden sm:inline">{buttonLabel}</span>
-        <span className="sm:hidden">Install</span>
+        <span className="hidden min-[380px]:inline sm:hidden">Install</span>
       </button>
       {modal}
     </>

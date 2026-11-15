@@ -24,7 +24,7 @@ export default function EventCard({ event, onClick, compact }: EventCardProps) {
   return (
     <article
       onClick={onClick}
-      className={`glass rounded-2xl overflow-hidden group cursor-pointer transition-transform duration-200 hover:-translate-y-1 flex flex-col h-full ${
+      className={`glass rounded-2xl overflow-hidden group cursor-pointer transition-transform duration-200 hover:-translate-y-1 flex flex-col h-full min-w-0 ${
         compact ? 'w-full' : ''
       }`}
     >
@@ -36,41 +36,41 @@ export default function EventCard({ event, onClick, compact }: EventCardProps) {
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs font-medium text-white">
-          <span>
+        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between gap-2 text-xs font-medium text-white">
+          <span className="truncate">
             {event.category}
             {event.status === 'ongoing' ? ' · Live now' : ''}
           </span>
-          <span className="tabular-nums font-semibold">
+          <span className="tabular-nums font-semibold shrink-0">
             {isPaid ? `₹${event.fee || 0}` : 'Free'}
           </span>
         </div>
       </div>
 
-      <div className="p-5 flex-1 flex flex-col justify-between">
-        <div>
-          <h3 className="text-lg font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-lg font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
             {event.title}
           </h3>
 
           <div className="space-y-1.5 text-xs text-secondary">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Calendar size={14} className="text-primary shrink-0" />
               <span className="truncate">{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <MapPin size={14} className="text-primary shrink-0" />
               <span className="line-clamp-1">{event.venue}</span>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-          <span className="text-xs text-secondary flex items-center gap-1.5 tabular-nums">
-            <Users size={14} className="text-primary" />
-            {event.registeredCount || 0} / {event.registrationLimit} registered
+        <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between gap-2">
+          <span className="text-xs text-secondary flex items-center gap-1.5 tabular-nums min-w-0 truncate">
+            <Users size={14} className="text-primary shrink-0" />
+            <span className="truncate">{event.registeredCount || 0} / {event.registrationLimit} registered</span>
           </span>
-          <span className="text-xs font-semibold text-primary flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+          <span className="text-xs font-semibold text-primary flex items-center gap-1 shrink-0 group-hover:translate-x-0.5 transition-transform">
             View
             <ArrowRight size={14} />
           </span>

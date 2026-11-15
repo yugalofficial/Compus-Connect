@@ -64,14 +64,14 @@ export default function RoleHeader() {
           ];
 
   return (
-    <header className="sticky top-0 z-[100] w-full h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] px-4 sm:px-6 glass border-b border-border-subtle">
-      <div className="max-w-7xl mx-auto h-16 flex items-center justify-between gap-6">
+    <header className="sticky top-0 z-[100] w-full h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] px-3 sm:px-6 glass border-b border-border-subtle">
+      <div className="max-w-7xl mx-auto h-16 flex items-center justify-between gap-2 sm:gap-6 min-w-0">
         {/* Zone 1: Single-line Brand Wordmark */}
         <Link
           to={getDashboardLink()}
-          className="text-lg font-extrabold tracking-tight font-display whitespace-nowrap shrink-0 flex items-center gap-2"
+          className="text-base sm:text-lg font-extrabold tracking-tight font-display whitespace-nowrap shrink-0 flex items-center gap-1.5 min-w-0"
         >
-          <span>Campus <span className="text-primary">Connect</span></span>
+          <span className="truncate">Campus <span className="text-primary">Connect</span></span>
         </Link>
 
         {/* Zone 2: Desktop Navigation Links */}
@@ -97,7 +97,7 @@ export default function RoleHeader() {
         )}
 
         {/* Zone 3: Controls & Account Menu */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <PWAInstallButton variant="compact" />
           <ThemeToggle />
 
@@ -105,11 +105,11 @@ export default function RoleHeader() {
             <button
               onClick={() => navigate('/notifications')}
               aria-label="Notifications"
-              className="w-10 h-10 rounded-xl border border-border-subtle flex items-center justify-center text-secondary hover:text-primary hover:bg-primary/5 transition-colors relative"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-border-subtle flex items-center justify-center text-secondary hover:text-primary hover:bg-primary/5 transition-colors relative shrink-0"
             >
-              <Bell size={18} />
+              <Bell size={17} />
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
                   {unreadNotifications > 9 ? '9+' : unreadNotifications}
                 </span>
               )}
@@ -120,7 +120,7 @@ export default function RoleHeader() {
             <button
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Account menu"
-              className="flex items-center gap-2 h-10 pl-1.5 pr-2.5 rounded-xl border border-border-subtle hover:bg-secondary/10 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-10 pl-1 pr-1.5 sm:pl-1.5 sm:pr-2.5 rounded-xl border border-border-subtle hover:bg-secondary/10 transition-colors shrink-0"
             >
               <div className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
                 {user.photoURL ? (
@@ -130,11 +130,11 @@ export default function RoleHeader() {
                 )}
               </div>
               <span className="hidden sm:inline text-xs font-semibold max-w-[110px] truncate">{user.name}</span>
-              <ChevronDown size={14} className="text-secondary" />
+              <ChevronDown size={14} className="text-secondary hidden min-[360px]:block" />
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-56 glass rounded-2xl p-2 shadow-2xl z-[200]">
+              <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] glass rounded-2xl p-2 shadow-2xl z-[200]">
                 <div className="px-3 py-2 border-b border-border-subtle mb-1">
                   <p className="text-sm font-semibold truncate">{user.name}</p>
                   <p className="text-xs text-secondary truncate">{user.email}</p>

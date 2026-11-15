@@ -151,14 +151,14 @@ export default function Dashboard() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-7xl mx-auto space-y-10"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto space-y-8 sm:space-y-10"
     >
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">
             {isAdmin ? 'Administrator View' : 'Organiser Console'}
           </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
             Organiser Hub
           </h1>
           <p className="text-secondary text-sm mt-1">
@@ -166,28 +166,28 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3 shrink-0">
           {user?.societyId ? (
             <Link
               to={`/society/${user.societyId}`}
-              className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
+              className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
             >
-              <Building2 size={16} className="text-primary" />
+              <Building2 size={16} className="text-primary shrink-0" />
               My Society
             </Link>
           ) : (
             <Link
               to="/create-society"
-              className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
+              className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
             >
-              <Building2 size={16} className="text-primary" />
+              <Building2 size={16} className="text-primary shrink-0" />
               Create Society
             </Link>
           )}
 
           <Link
             to="/create"
-            className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/25 flex items-center gap-2 hover:opacity-95 transition-opacity"
+            className="bg-primary text-white px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-lg shadow-primary/25 flex items-center gap-2 hover:opacity-95 transition-opacity"
           >
             <Plus size={18} />
             Create Event
@@ -197,7 +197,7 @@ export default function Dashboard() {
 
       {/* Metrics Row */}
       <section className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             {
               label: 'Total Events',
@@ -233,13 +233,13 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="glass p-5 rounded-3xl border border-border-subtle"
+              className="glass p-4 sm:p-5 rounded-3xl border border-border-subtle min-w-0"
             >
               <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-3`}>
                 <stat.icon size={20} />
               </div>
-              <p className="text-2xl sm:text-3xl font-extrabold tabular-nums">{stat.val}</p>
-              <p className="text-xs text-secondary font-semibold uppercase tracking-wider mt-1">
+              <p className="text-xl sm:text-3xl font-extrabold tabular-nums truncate">{stat.val}</p>
+              <p className="text-[11px] sm:text-xs text-secondary font-semibold uppercase tracking-wider mt-1 truncate">
                 {stat.label}
               </p>
             </motion.div>
@@ -249,11 +249,11 @@ export default function Dashboard() {
         {/* Analytics Charts */}
         {organizedEvents.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 glass p-6 rounded-3xl border border-border-subtle">
+            <div className="lg:col-span-2 glass p-5 sm:p-6 rounded-3xl border border-border-subtle min-w-0 overflow-hidden">
               <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-6">
                 Registrations by Event
               </h3>
-              <div className="h-60 w-full">
+              <div className="h-60 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={organizedEvents.slice(0, 6)}>
                     <XAxis
@@ -275,11 +275,11 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="glass p-6 rounded-3xl border border-border-subtle">
+            <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle min-w-0 overflow-hidden">
               <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-6">
                 Category Split
               </h3>
-              <div className="h-60 w-full">
+              <div className="h-60 w-full min-w-0">
                 {categoryCounts.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -333,19 +333,19 @@ export default function Dashboard() {
               return (
                 <div
                   key={payment.id}
-                  className="glass p-5 rounded-3xl border border-border-subtle flex flex-col justify-between gap-4"
+                  className="glass p-5 rounded-3xl border border-border-subtle flex flex-col justify-between gap-4 min-w-0"
                 >
-                  <div className="flex justify-between items-start gap-3">
-                    <div>
-                      <h4 className="font-bold text-base leading-snug">{payment.eventTitle}</h4>
-                      <p className="text-xs text-secondary font-medium mt-0.5">
+                  <div className="flex justify-between items-start gap-3 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-base leading-snug break-words">{payment.eventTitle}</h4>
+                      <p className="text-xs text-secondary font-medium mt-0.5 truncate">
                         {vendor?.vendorName || vendor?.name || 'Canteen Partner'}
                       </p>
                       <p className="text-xs text-secondary font-medium tabular-nums mt-1">
                         {payment.studentCount} coupons · ₹{payment.amount.toLocaleString()}
                       </p>
                       {upiDisplay && (
-                        <p className="text-xs text-primary font-mono mt-1">
+                        <p className="text-xs text-primary font-mono mt-1 break-all">
                           UPI: {upiDisplay}
                         </p>
                       )}
@@ -365,7 +365,7 @@ export default function Dashboard() {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {payment.status === 'pending' && (
                       <button
                         onClick={() => handleApprovePayment(payment)}
@@ -492,9 +492,9 @@ export default function Dashboard() {
                 <motion.div
                   key={event.id}
                   whileHover={{ y: -3 }}
-                  className="glass p-5 rounded-3xl border border-border-subtle flex items-center gap-5 group"
+                  className="glass p-4 sm:p-5 rounded-3xl border border-border-subtle flex items-center gap-3.5 sm:gap-5 group min-w-0"
                 >
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-secondary/10 shrink-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-secondary/10 shrink-0">
                     <img
                       src={getEventCover(event.posterUrl, event.category)}
                       className="w-full h-full object-cover"

@@ -17,8 +17,8 @@ function PendingApprovalGate() {
   const isRejected = user.status === 'rejected' || user.status === 'suspended';
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] flex items-center justify-center p-6">
-      <div className="w-full max-w-lg glass rounded-3xl p-8 md:p-10 shadow-xl">
+    <div className="min-h-[calc(100dvh-64px)] flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-lg glass rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl">
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${
           isRejected ? 'bg-red-500/15 text-red-500' : 'bg-amber-500/15 text-amber-500'
         }`}>
@@ -40,20 +40,20 @@ function PendingApprovalGate() {
         </p>
 
         <div className="rounded-2xl border border-border-subtle p-4 space-y-3 mb-6 bg-background/50">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-secondary flex items-center gap-2"><UserIcon size={15} /> Name</span>
-            <span className="font-semibold">{user.name}</span>
+          <div className="flex items-center justify-between gap-3 text-sm min-w-0">
+            <span className="text-secondary flex items-center gap-2 shrink-0"><UserIcon size={15} /> Name</span>
+            <span className="font-semibold truncate min-w-0 text-right">{user.name}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-secondary flex items-center gap-2"><Mail size={15} /> Email</span>
-            <span className="font-medium truncate max-w-[220px]">{user.email}</span>
+          <div className="flex items-center justify-between gap-3 text-sm min-w-0">
+            <span className="text-secondary flex items-center gap-2 shrink-0"><Mail size={15} /> Email</span>
+            <span className="font-medium truncate min-w-0 text-right">{user.email}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-secondary">Requested Role</span>
-            <span className="font-semibold capitalize">{user.role === 'organizer' ? 'Organiser' : user.role}</span>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-secondary shrink-0">Requested Role</span>
+            <span className="font-semibold capitalize text-right">{user.role === 'organizer' ? 'Organiser' : user.role}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-secondary">Approval Status</span>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-secondary shrink-0">Approval Status</span>
             <span className={`font-semibold capitalize flex items-center gap-1.5 ${
               isRejected ? 'text-red-500' : 'text-amber-500'
             }`}>

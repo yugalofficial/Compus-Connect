@@ -82,14 +82,14 @@ export default function Calendar() {
     events.some((event) => event.date && isSameDay(new Date(event.date), date) && myEventIds.includes(event.id));
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Campus Calendar</h1>
+    <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Campus Calendar</h1>
           <p className="text-secondary text-sm mt-1">Track upcoming events and your registered schedule.</p>
         </div>
 
-        <div className="flex p-1 glass rounded-xl self-start sm:self-auto">
+        <div className="flex p-1 glass rounded-xl self-start sm:self-auto shrink-0">
           <button
             onClick={() => setView('all')}
             className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
@@ -111,9 +111,9 @@ export default function Calendar() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Month Grid */}
-        <div className="lg:col-span-7 glass p-5 sm:p-6 rounded-2xl">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+        <div className="lg:col-span-7 glass p-4 sm:p-6 rounded-2xl min-w-0">
+          <div className="flex justify-between items-center mb-5 sm:mb-6">
+            <h2 className="text-base sm:text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -132,15 +132,15 @@ export default function Calendar() {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1.5 mb-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="text-center text-[11px] font-semibold text-secondary py-1">
+              <div key={day} className="text-center text-[10px] sm:text-[11px] font-semibold text-secondary py-1">
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1.5">
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {Array.from({ length: leadingEmptyDays }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
             ))}
@@ -154,7 +154,7 @@ export default function Calendar() {
                 <button
                   key={day.toISOString()}
                   onClick={() => setSelectedDate(day)}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-colors tabular-nums ${
+                  className={`aspect-square rounded-lg sm:rounded-xl flex flex-col items-center justify-center relative transition-colors tabular-nums ${
                     isSelected
                       ? 'bg-primary text-white font-bold shadow-sm'
                       : isTodaysDate
@@ -177,7 +177,7 @@ export default function Calendar() {
         </div>
 
         {/* Selected Date Schedule */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="lg:col-span-5 space-y-4 min-w-0">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold">
               {isSameDay(selectedDate, new Date()) ? "Today's Events" : format(selectedDate, 'EEEE, MMM d')}

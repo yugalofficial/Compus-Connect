@@ -65,7 +65,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {createPortal(
         <>
           {/* Toast Container */}
-          <div className="fixed top-20 right-4 left-4 sm:left-auto sm:w-96 z-[2500] flex flex-col gap-2 pointer-events-none">
+          <div className="fixed top-[calc(4.5rem+env(safe-area-inset-top,0px))] right-3 left-3 sm:left-auto sm:right-4 sm:w-96 z-[2500] flex flex-col gap-2 pointer-events-none">
             <AnimatePresence>
               {toasts.map((toast) => (
                 <motion.div

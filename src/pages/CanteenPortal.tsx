@@ -177,31 +177,31 @@ export default function CanteenPortal() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-7xl mx-auto space-y-10"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto space-y-8 sm:space-y-10"
     >
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-5">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-5">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1 truncate">
             {user?.vendorName || 'Canteen Operations'}
           </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
             Canteen Portal
           </h1>
           <p className="text-secondary text-sm mt-1">
             Scan student meal QR passes, audit redemptions, and settle payouts with organisers.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3 shrink-0">
           <button
             onClick={() => setShowSettings(true)}
-            className="glass border border-border-subtle px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:border-primary/40"
+            className="glass border border-border-subtle px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:border-primary/40"
           >
             <Settings size={16} />
             Payout Settings
           </button>
           <button
             onClick={() => setShowScanner(true)}
-            className="bg-primary text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/25 flex items-center gap-2 hover:opacity-95"
+            className="bg-primary text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/25 flex items-center gap-2 hover:opacity-95"
           >
             <QrCode size={18} />
             Scan Coupon
@@ -210,10 +210,10 @@ export default function CanteenPortal() {
       </header>
 
       {/* Active Event Selector + Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-3 glass p-5 rounded-3xl border border-border-subtle flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+        <div className="lg:col-span-3 glass p-4 sm:p-5 rounded-3xl border border-border-subtle flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 min-w-0">
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
               <Calendar size={18} />
             </div>
             <span className="text-xs font-bold uppercase tracking-wider text-secondary">
@@ -223,7 +223,7 @@ export default function CanteenPortal() {
           <select
             value={activeEventId}
             onChange={(e) => setActiveEventId(e.target.value)}
-            className="flex-1 bg-background/60 border border-border-subtle rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full min-w-0 flex-1 bg-background/60 border border-border-subtle rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {activeEvents.map((e) => (
               <option key={e.id} value={e.id}>
@@ -234,28 +234,28 @@ export default function CanteenPortal() {
           </select>
         </div>
 
-        <div className="glass p-6 rounded-3xl border border-border-subtle">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle min-w-0">
           <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
             <Utensils size={20} />
           </div>
-          <p className="text-3xl font-extrabold tabular-nums">₹{earnings.toLocaleString()}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">₹{earnings.toLocaleString()}</p>
           <p className="text-xs text-secondary font-semibold uppercase tracking-wider mt-1">
             Total Coupon Value
           </p>
         </div>
 
-        <div className="glass p-6 rounded-3xl border border-border-subtle">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle min-w-0">
           <div className="w-11 h-11 bg-accent/10 rounded-2xl flex items-center justify-center text-accent mb-4">
             <Users size={20} />
           </div>
-          <p className="text-3xl font-extrabold tabular-nums">{redemptions.length}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate">{redemptions.length}</p>
           <p className="text-xs text-secondary font-semibold uppercase tracking-wider mt-1">
             Meals Redeemed
           </p>
         </div>
 
         {/* Payout Requests */}
-        <div className="glass p-6 rounded-3xl border border-border-subtle">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle min-w-0">
           <h3 className="text-xs text-secondary font-bold uppercase tracking-wider mb-4">
             Event Payout Requests
           </h3>
@@ -350,44 +350,44 @@ export default function CanteenPortal() {
               className="space-y-4"
             >
               <div
-                className={`p-5 rounded-2xl border flex items-center gap-4 ${
+                className={`p-4 sm:p-5 rounded-2xl border flex items-center gap-3.5 sm:gap-4 min-w-0 ${
                   status === 'success'
                     ? 'bg-emerald-500/10 border-emerald-500/30'
                     : 'bg-red-500/10 border-red-500/30'
                 }`}
               >
-                <div className={status === 'success' ? 'text-emerald-500' : 'text-red-500'}>
-                  {status === 'success' ? <CheckCircle size={36} /> : <XCircle size={36} />}
+                <div className={`shrink-0 ${status === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {status === 'success' ? <CheckCircle size={32} /> : <XCircle size={32} />}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h4
-                    className={`text-lg font-extrabold ${
+                    className={`text-base sm:text-lg font-extrabold ${
                       status === 'success' ? 'text-emerald-500' : 'text-red-500'
                     }`}
                   >
                     {status === 'success' ? 'Coupon Redeemed' : 'Validation Failed'}
                   </h4>
-                  <p className="text-sm text-secondary">{message}</p>
+                  <p className="text-xs sm:text-sm text-secondary break-words">{message}</p>
                 </div>
               </div>
 
               {status === 'success' && scannedData && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-4 rounded-2xl border border-border-subtle">
+                  <div className="p-4 rounded-2xl border border-border-subtle min-w-0">
                     <p className="text-[11px] text-secondary font-semibold uppercase">Student</p>
-                    <p className="text-sm font-bold mt-0.5">
+                    <p className="text-sm font-bold mt-0.5 truncate">
                       {scannedData.student?.name || scannedData.reg.userName || 'Student'}
                     </p>
                   </div>
-                  <div className="p-4 rounded-2xl border border-border-subtle">
+                  <div className="p-4 rounded-2xl border border-border-subtle min-w-0">
                     <p className="text-[11px] text-secondary font-semibold uppercase">Event</p>
                     <p className="text-sm font-bold truncate mt-0.5">
                       {scannedData.event?.title || 'Event'}
                     </p>
                   </div>
-                  <div className="p-4 rounded-2xl border border-border-subtle">
+                  <div className="p-4 rounded-2xl border border-border-subtle min-w-0">
                     <p className="text-[11px] text-secondary font-semibold uppercase">Organiser</p>
-                    <p className="text-sm font-bold mt-0.5">
+                    <p className="text-sm font-bold mt-0.5 truncate">
                       {scannedData.organizer?.name || 'Organiser'}
                     </p>
                   </div>
@@ -437,10 +437,10 @@ export default function CanteenPortal() {
               return (
                 <div
                   key={log.id}
-                  className="glass p-4 sm:p-5 rounded-3xl border border-border-subtle flex items-center justify-between gap-4"
+                  className="glass p-3.5 sm:p-5 rounded-3xl border border-border-subtle flex items-center justify-between gap-3 sm:gap-4 min-w-0"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
                       {log.student?.photoURL ? (
                         <img
                           src={log.student.photoURL}
@@ -451,11 +451,11 @@ export default function CanteenPortal() {
                         getInitials(studentName)
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h4 className="font-bold text-sm sm:text-base truncate">{studentName}</h4>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-secondary mt-0.5">
-                        <span className="truncate">{log.event?.title || log.eventId}</span>
-                        <span>·</span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-secondary mt-0.5">
+                        <span className="truncate max-w-[180px] sm:max-w-none">{log.event?.title || log.eventId}</span>
+                        <span className="hidden min-[380px]:inline">·</span>
                         <span className="flex items-center gap-1 tabular-nums">
                           <Clock size={12} />
                           {formatSafeTime(log.couponRedeemedAt || log.scannedAt)}
@@ -463,7 +463,7 @@ export default function CanteenPortal() {
                       </div>
                     </div>
                   </div>
-                  <span className="px-3 py-1.5 bg-emerald-500/15 text-emerald-500 rounded-xl text-xs font-bold shrink-0">
+                  <span className="px-2.5 sm:px-3 py-1.5 bg-emerald-500/15 text-emerald-500 rounded-xl text-xs font-bold shrink-0 tabular-nums">
                     ₹{log.event?.couponCost || 50}
                   </span>
                 </div>

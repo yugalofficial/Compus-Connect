@@ -121,18 +121,18 @@ export default function Notifications() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-2xl mx-auto space-y-6"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-2xl mx-auto space-y-6"
     >
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center"
+            className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center shrink-0"
             aria-label="Back"
           >
             <ArrowLeft size={18} />
           </button>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Notifications</h1>
             <p className="text-xs text-secondary tabular-nums">
               {unreadCount} unread · {notifications.length} total
@@ -140,11 +140,11 @@ export default function Notifications() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="px-3.5 py-2 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-1.5 hover:border-primary/40"
+              className="px-3.5 py-2 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-1.5 hover:border-primary/40 whitespace-nowrap"
             >
               <CheckCheck size={14} />
               Mark all read
@@ -196,26 +196,26 @@ export default function Notifications() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   onClick={() => !notif.read && markAsRead(notif.id)}
-                  className={`glass p-5 rounded-3xl border flex gap-4 cursor-pointer transition-all ${
+                  className={`glass p-4 sm:p-5 rounded-3xl border flex gap-3.5 sm:gap-4 cursor-pointer transition-all min-w-0 ${
                     notif.read
                       ? 'border-border-subtle opacity-70'
                       : 'border-primary/40 bg-primary/5'
                   }`}
                 >
-                  <div className="w-11 h-11 rounded-2xl bg-background/60 border border-border-subtle flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-background/60 border border-border-subtle flex items-center justify-center shrink-0">
                     {getIcon(notif.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-3 mb-1">
-                      <h3 className="font-bold text-sm leading-tight flex items-center gap-2">
-                        {notif.title}
+                    <div className="flex justify-between items-start gap-2 mb-1">
+                      <h3 className="font-bold text-sm leading-tight flex items-center gap-2 min-w-0 break-words">
+                        <span className="break-words">{notif.title}</span>
                         {!notif.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                       </h3>
                       <span className="text-[11px] text-secondary font-medium tabular-nums shrink-0">
                         {formatNotifTime(notif.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-secondary leading-relaxed">{notif.message}</p>
+                    <p className="text-xs text-secondary leading-relaxed break-words">{notif.message}</p>
                   </div>
                 </motion.div>
               ))

@@ -120,17 +120,17 @@ export default function CreateSociety() {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-2xl mx-auto"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-2xl mx-auto"
     >
-      <header className="flex items-center gap-4 mb-8">
+      <header className="flex items-center gap-3 sm:gap-4 mb-8">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center"
+          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center shrink-0"
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             {id ? 'Edit Society' : 'Create Society'}
           </h1>
@@ -139,7 +139,7 @@ export default function CreateSociety() {
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="glass p-6 rounded-3xl border border-border-subtle space-y-6">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle space-y-6">
           <div className="relative">
             <label className="relative block h-36 bg-secondary/10 rounded-2xl overflow-hidden border border-dashed border-border-subtle cursor-pointer group">
               <img

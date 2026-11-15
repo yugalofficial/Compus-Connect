@@ -43,9 +43,9 @@ export default function Landing() {
   return (
     <div className="min-h-dvh flex flex-col bg-background text-foreground">
       {/* Public Top Bar (3-zone contract) */}
-      <header className="sticky top-0 z-50 h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] px-4 sm:px-6 glass border-b border-border-subtle">
-        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between gap-4 sm:gap-8">
-          <Link to="/" className="text-lg font-extrabold tracking-tight font-display whitespace-nowrap shrink-0">
+      <header className="sticky top-0 z-50 h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] px-3 sm:px-6 glass border-b border-border-subtle">
+        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between gap-2 sm:gap-8 min-w-0">
+          <Link to="/" className="text-base sm:text-lg font-extrabold tracking-tight font-display whitespace-nowrap shrink-0 truncate min-w-0">
             Campus <span className="text-primary">Connect</span>
           </Link>
 
@@ -55,12 +55,12 @@ export default function Landing() {
             <Link to="/how-to-use" className="hover:text-foreground transition-colors whitespace-nowrap shrink-0">Platform Guide</Link>
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <PWAInstallButton variant="compact" />
             <ThemeToggle />
             <Link
               to="/login"
-              className="px-4 py-2 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
+              className="px-3 sm:px-4 py-2 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
             >
               Sign In
             </Link>
@@ -69,13 +69,13 @@ export default function Landing() {
       </header>
 
       {/* Hero Split */}
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-12 lg:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
-          <div className="lg:col-span-6 flex flex-col justify-center">
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+          <div className="lg:col-span-6 flex flex-col justify-center min-w-0">
             <p className="text-xs font-semibold text-primary tracking-wide mb-3">
               Campus Operations · Events, Attendance & Canteen Billing
             </p>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] mb-5">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] mb-5">
               One platform for every campus event and portal.
             </h1>
             <p className="text-base sm:text-lg text-secondary leading-relaxed mb-8 max-w-xl">
@@ -143,31 +143,31 @@ export default function Landing() {
       </section>
 
       {/* Workflow Strip */}
-      <section id="workflow" className="border-t border-border-subtle py-14 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto glass rounded-3xl p-8 md:p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="flex gap-4">
+      <section id="workflow" className="border-t border-border-subtle py-12 sm:py-14 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto glass rounded-3xl p-6 sm:p-8 md:p-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="flex gap-4 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ShieldCheck size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h4 className="font-bold text-base mb-1">01. Super Admin Approval</h4>
               <p className="text-sm text-secondary">New accounts are reviewed and approved by the Super Admin before accessing portals.</p>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <QrCode size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h4 className="font-bold text-base mb-1">02. Dual QR Check-in & Meals</h4>
               <p className="text-sm text-secondary">Attendance verification unlocks tamper-proof canteen food coupon QR codes.</p>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Utensils size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h4 className="font-bold text-base mb-1">03. Automated Reconciliation</h4>
               <p className="text-sm text-secondary">Organisers export PDF reports, upload UPI proofs, and sync records to Google Sheets.</p>
             </div>
@@ -176,13 +176,13 @@ export default function Landing() {
       </section>
 
       {/* Install App Banner (Android & iOS) */}
-      <section className="px-4 sm:px-6 pb-12">
+      <section className="px-4 sm:px-6 pb-10">
         <div className="max-w-7xl mx-auto">
           <PWAInstallButton variant="card" />
         </div>
       </section>
 
-      <footer className="mt-auto py-8 px-4 sm:px-6 border-t border-border-subtle text-center text-xs text-secondary">
+      <footer className="mt-auto py-7 px-4 sm:px-6 border-t border-border-subtle text-center text-xs text-secondary">
         Campus Connect V2 · Production Event & Canteen Management Platform
       </footer>
     </div>

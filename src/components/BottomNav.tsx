@@ -55,7 +55,7 @@ export default function BottomNav() {
         paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0px))',
         minHeight: 'calc(4.25rem + env(safe-area-inset-bottom, 0px))',
       }}
-      className="md:hidden fixed bottom-0 inset-x-0 z-[150] bg-surface/95 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-around pt-1.5"
+      className="md:hidden fixed bottom-0 inset-x-0 z-[150] bg-surface/95 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-around gap-0.5 pt-1.5"
     >
       {navItems.map((item) => {
         const isActive = location.pathname === item.path;
@@ -64,7 +64,7 @@ export default function BottomNav() {
             key={item.path}
             to={item.path}
             aria-current={isActive ? 'page' : undefined}
-            className="flex flex-col items-center justify-center min-w-[56px] min-h-[46px] px-2 py-1 rounded-xl gap-1 relative touch-manipulation active:scale-95 transition-transform"
+            className="flex-1 min-w-0 max-w-[88px] flex flex-col items-center justify-center min-h-[46px] px-1 py-1 rounded-xl gap-1 relative touch-manipulation active:scale-95 transition-transform"
           >
             <div className={cn('relative transition-colors', isActive ? 'text-primary' : 'text-secondary')}>
               <item.icon size={20} strokeWidth={isActive ? 2.4 : 2} />
@@ -76,7 +76,7 @@ export default function BottomNav() {
             </div>
             <span
               className={cn(
-                'text-[10px] leading-none whitespace-nowrap',
+                'text-[10px] leading-none whitespace-nowrap truncate max-w-full',
                 isActive ? 'text-primary font-semibold' : 'text-secondary font-medium'
               )}
             >

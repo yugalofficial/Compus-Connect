@@ -323,8 +323,8 @@ export default function EventDetails() {
   const upiUri = `upi://pay?pa=${encodeURIComponent(targetUpiId)}&pn=${encodeURIComponent('Campus Connect')}&am=${event.fee || 0}&cu=INR`;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5 sm:pt-6 pb-4 space-y-6">
+      <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-foreground"
@@ -333,7 +333,7 @@ export default function EventDetails() {
         </button>
         <button
           onClick={handleShare}
-          className="px-3.5 py-2 rounded-xl glass text-xs font-semibold flex items-center gap-1.5 hover:text-primary transition-colors"
+          className="px-3.5 py-2 rounded-xl glass text-xs font-semibold flex items-center gap-1.5 hover:text-primary transition-colors shrink-0"
         >
           <Share2 size={14} /> Share Event
         </button>
@@ -341,51 +341,51 @@ export default function EventDetails() {
 
       {/* Hero Cover */}
       <div className="glass rounded-3xl overflow-hidden">
-        <div className="aspect-[16/9] relative bg-slate-900">
+        <div className="aspect-[16/10] sm:aspect-[16/9] relative bg-slate-900">
           <img
             src={getEventCover(event.posterUrl, event.category)}
             alt={event.title}
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-          <div className="absolute bottom-5 left-6 right-6 text-white">
-            <p className="text-xs font-medium text-white/80 mb-1">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 text-white min-w-0">
+            <p className="text-xs font-medium text-white/85 mb-1 truncate">
               {event.category} · {event.type === 'paid' ? `Paid Entry (₹${event.fee})` : 'Free Entry'}
               {event.hasFoodCoupon ? ' · Meal Coupon Included' : ''}
             </p>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">{event.title}</h1>
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight break-words">{event.title}</h1>
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-5 sm:p-8 space-y-6">
           {/* Metadata Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-border-subtle">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Calendar size={18} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary">Date & Time</p>
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-semibold truncate">
                   {event.date ? format(new Date(event.date), 'MMM d, yyyy · h:mm a') : 'TBA'}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <MapPin size={18} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary">Venue</p>
-                <p className="text-sm font-semibold">{event.venue}</p>
+                <p className="text-sm font-semibold break-words">{event.venue}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Users size={18} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary">Capacity</p>
                 <p className="text-sm font-semibold tabular-nums">
                   {event.registeredCount || 0} / {event.registrationLimit} Registered
@@ -396,7 +396,7 @@ export default function EventDetails() {
 
           <div>
             <h2 className="text-base font-bold mb-2">About this event</h2>
-            <p className="text-sm text-secondary leading-relaxed whitespace-pre-line">{event.description}</p>
+            <p className="text-sm text-secondary leading-relaxed whitespace-pre-line break-words">{event.description}</p>
           </div>
 
           {/* Registration & Ticket Section */}
@@ -447,17 +447,18 @@ export default function EventDetails() {
               {registration.status === 'confirmed' && user && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Attendance QR */}
-                  <div className="p-6 rounded-2xl border border-border-subtle bg-background/60 text-center flex flex-col items-center justify-center">
+                  <div className="p-4 sm:p-6 rounded-2xl border border-border-subtle bg-background/60 text-center flex flex-col items-center justify-center min-w-0">
                     {event.qrVisible !== false ? (
                       <>
-                        <div className="bg-white p-3.5 rounded-2xl shadow-sm mb-3">
+                        <div className="bg-white p-3.5 rounded-2xl shadow-sm mb-3 max-w-full">
                           <QRCodeSVG
                             value={`attendance:${event.id}:${user.uid}:${registration.validationToken}`}
                             size={168}
+                            className="w-full max-w-[168px] h-auto"
                           />
                         </div>
                         <p className="text-sm font-bold mb-1">Attendance Check-In QR</p>
-                        <p className="text-xs font-mono text-secondary mb-2">
+                        <p className="text-xs font-mono text-secondary mb-2 break-all max-w-full">
                           attendance:{event.id.slice(0, 6)}...:{registration.validationToken?.slice(0, 6)}
                         </p>
                         {registration.attended ? (
@@ -481,13 +482,14 @@ export default function EventDetails() {
 
                   {/* Food Coupon QR */}
                   {event.hasFoodCoupon && (
-                    <div className="p-6 rounded-2xl border border-border-subtle bg-background/60 text-center flex flex-col items-center justify-center">
+                    <div className="p-4 sm:p-6 rounded-2xl border border-border-subtle bg-background/60 text-center flex flex-col items-center justify-center min-w-0">
                       {registration.attended ? (
                         <>
-                          <div className="bg-white p-3.5 rounded-2xl shadow-sm mb-3">
+                          <div className="bg-white p-3.5 rounded-2xl shadow-sm mb-3 max-w-full">
                             <QRCodeSVG
                               value={`coupon:${event.id}:${user.uid}:${registration.validationToken}`}
                               size={168}
+                              className="w-full max-w-[168px] h-auto"
                             />
                           </div>
                           <p className="text-sm font-bold text-accent mb-1">Canteen Food Coupon QR</p>
@@ -526,16 +528,16 @@ export default function EventDetails() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPayment(false)} />
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md glass rounded-3xl p-6 shadow-2xl max-h-[90dvh] overflow-y-auto"
+            className="relative w-full max-w-md glass rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-xl font-bold">Complete Registration</h2>
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold">Complete Registration</h2>
                 <p className="text-xs text-secondary">Amount payable: ₹{event.fee || 0}</p>
               </div>
               <button
                 onClick={() => setShowPayment(false)}
-                className="w-9 h-9 rounded-xl border border-border-subtle flex items-center justify-center"
+                className="w-9 h-9 rounded-xl border border-border-subtle flex items-center justify-center shrink-0"
               >
                 <X size={16} />
               </button>
@@ -566,10 +568,10 @@ export default function EventDetails() {
               <form onSubmit={handleManualPayment} className="space-y-4">
                 <div className="p-4 rounded-2xl bg-background border border-border-subtle text-center">
                   <p className="text-xs font-semibold text-secondary mb-2">Scan UPI QR to Pay ₹{event.fee || 0}</p>
-                  <div className="bg-white p-2.5 rounded-xl inline-block mb-2">
+                  <div className="bg-white p-2.5 rounded-xl inline-block mb-2 max-w-full">
                     <QRCodeSVG value={upiUri} size={130} />
                   </div>
-                  <p className="text-xs font-mono font-semibold">{targetUpiId}</p>
+                  <p className="text-xs font-mono font-semibold break-all">{targetUpiId}</p>
                 </div>
 
                 <div>

@@ -72,16 +72,16 @@ export default function HowToUse() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 sm:px-6 pt-6 pb-16 max-w-3xl mx-auto">
-      <header className="flex items-center gap-4 mb-10">
+    <div className="w-full bg-background px-4 sm:px-6 pt-5 sm:pt-6 pb-8 max-w-3xl mx-auto">
+      <header className="flex items-center gap-3 sm:gap-4 mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center"
+          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center shrink-0"
           aria-label="Back"
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Platform Guide</h1>
           <p className="text-secondary text-sm">How Campus Connect works for every role</p>
         </div>
@@ -94,14 +94,14 @@ export default function HowToUse() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass p-6 rounded-3xl border border-border-subtle"
+            className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle"
           >
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-3.5 sm:gap-4 mb-3 min-w-0">
               <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
                 <step.icon size={22} />
               </div>
-              <div>
-                <h3 className="text-lg font-bold">{step.title}</h3>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold break-words">{step.title}</h3>
                 <p className="text-xs font-semibold text-primary">{step.role}</p>
               </div>
             </div>
@@ -110,14 +110,14 @@ export default function HowToUse() {
         ))}
 
         <section className="pt-4">
-          <div className="glass p-6 sm:p-8 rounded-3xl bg-primary/5 border border-primary/20">
+          <div className="glass p-5 sm:p-8 rounded-3xl bg-primary/5 border border-primary/20">
             <div className="flex items-center gap-3 mb-3">
-              <HelpCircle className="text-primary" size={22} />
-              <h2 className="text-xl font-bold">Need Account or Event Support?</h2>
+              <HelpCircle className="text-primary shrink-0" size={22} />
+              <h2 className="text-lg sm:text-xl font-bold">Need Account or Event Support?</h2>
             </div>
-            <p className="text-secondary text-sm mb-6 leading-relaxed">
+            <p className="text-secondary text-sm mb-6 leading-relaxed break-words">
               For role approvals, society onboarding, or payment settlement help, reach out to the
-              Campus Admin at <span className="text-primary font-bold">{supportEmail}</span>.
+              Campus Admin at <span className="text-primary font-bold break-all">{supportEmail}</span>.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a

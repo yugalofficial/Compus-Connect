@@ -86,7 +86,13 @@ export default function QRScanner({ onScan, onClose, title = 'Scan QR Code' }: Q
           { facingMode: 'environment' },
           {
             fps: 12,
-            qrbox: { width: 240, height: 240 },
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const size = Math.max(
+                160,
+                Math.min(240, Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.72))
+              );
+              return { width: size, height: size };
+            },
             aspectRatio: 1.0,
           },
           (decodedText) => {
@@ -200,7 +206,7 @@ export default function QRScanner({ onScan, onClose, title = 'Scan QR Code' }: Q
 
                 {!error && isScanning && (
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="w-[230px] h-[230px] border-2 border-primary rounded-2xl shadow-[0_0_0_100vmax_rgba(0,0,0,0.45)]" />
+                    <div className="w-[min(72%,230px)] aspect-square border-2 border-primary rounded-2xl shadow-[0_0_0_100vmax_rgba(0,0,0,0.45)]" />
                   </div>
                 )}
               </div>

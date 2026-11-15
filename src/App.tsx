@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { useAuth, AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import {
   ProtectedRoute,
@@ -31,18 +31,21 @@ import CreateSociety from './pages/CreateSociety';
 import CanteenPortal from './pages/CanteenPortal';
 import AdminDashboard from './pages/AdminDashboard';
 
-export default function App() {
-  return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <Router basename={import.meta.env.BASE_URL}>
-            <div className="min-h-dvh flex flex-col bg-background text-foreground transition-colors duration-200">
-              <RoleHeader />
+function AppLayout() {
+  const { user, isApproved } = useAuth();
+  const hasBottomNav = Boolean(user && isApproved);
 
-              <main className="flex-1 w-full pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] md:pb-8">
-                <ErrorBoundary>
-                  <Routes>
+  return (
+    <div className="min-h-dvh w-full max-w-full overflow-x-clip flex flex-col bg-background text-foreground transition-colors duration-200">
+      <RoleHeader />
+
+      <main
+        className={`flex-1 w-full min-w-0 ${
+          hasBottomNav ? 'pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:pb-8' : ''
+        }`}
+      >
+        <ErrorBoundary>
+          <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/how-to-use" element={<HowToUse />} />
                   <Route path="/login" element={<Login />} />
@@ -186,14 +189,24 @@ export default function App() {
                   />
 
                   <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </ErrorBoundary>
-              </main>
+          </Routes>
+        </ErrorBoundary>
+      </main>
 
-              <OfflineIndicator />
-              <BeforeInstallPromptBanner />
-              <BottomNav />
-            </div>
+      <OfflineIndicator />
+      <BeforeInstallPromptBanner />
+      <BottomNav />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <Router basename={import.meta.env.BASE_URL}>
+            <AppLayout />
           </Router>
         </AuthProvider>
       </ToastProvider>

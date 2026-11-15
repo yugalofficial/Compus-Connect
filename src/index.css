@@ -50,14 +50,25 @@
   --accent: #eab308;
 }
 
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   transition: background-color 0.2s ease, color 0.2s ease;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-width: 0;
+  max-width: 100%;
 }
 
 h1, h2, h3, h4, .font-display {

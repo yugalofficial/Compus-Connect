@@ -169,11 +169,11 @@ export default function Profile() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-2xl mx-auto"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-2xl mx-auto"
     >
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">Profile</h1>
-        <div className="flex gap-2">
+      <header className="flex justify-between items-center gap-3 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Profile</h1>
+        <div className="flex gap-2 shrink-0">
           <Link
             to="/notifications"
             className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center text-secondary hover:text-foreground"
@@ -183,7 +183,7 @@ export default function Profile() {
           </Link>
           <button
             onClick={() => setShowEditModal(true)}
-            className="px-4 h-10 glass border border-border-subtle rounded-full flex items-center gap-2 text-xs font-bold text-primary hover:border-primary/40"
+            className="px-4 h-10 glass border border-border-subtle rounded-full flex items-center gap-2 text-xs font-bold text-primary hover:border-primary/40 whitespace-nowrap"
           >
             <Settings size={16} />
             Edit Profile
@@ -191,9 +191,9 @@ export default function Profile() {
         </div>
       </header>
 
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 min-w-0">
         <div className="relative inline-block mb-4">
-          <div className="w-28 h-28 rounded-3xl glass p-1 border border-border-subtle bg-primary/10 flex items-center justify-center overflow-hidden">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl glass p-1 border border-border-subtle bg-primary/10 flex items-center justify-center overflow-hidden">
             {user.photoURL ? (
               <img
                 src={user.photoURL}
@@ -208,10 +208,10 @@ export default function Profile() {
             {getRoleIcon()}
           </div>
         </div>
-        <h2 className="text-2xl font-extrabold tracking-tight">{user.name}</h2>
-        <p className="text-secondary text-sm">{user.email}</p>
+        <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight break-words">{user.name}</h2>
+        <p className="text-secondary text-sm break-all">{user.email}</p>
         {(user.college || user.organisation || user.vendorName) && (
-          <p className="text-xs text-secondary mt-1">
+          <p className="text-xs text-secondary mt-1 break-words">
             {user.vendorName || user.organisation || user.college}
             {user.course ? ` · ${user.course}` : ''}
           </p>
@@ -219,7 +219,7 @@ export default function Profile() {
 
         <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 glass border border-border-subtle rounded-full text-xs font-bold text-primary">
           <Star size={12} className="fill-primary" />
-          <span className="capitalize">{user.role}</span> · Level {level}
+          <span className="capitalize">{user.role === 'organizer' ? 'Organiser' : user.role}</span> · Level {level}
         </div>
       </div>
 
@@ -451,7 +451,7 @@ export default function Profile() {
                 </div>
 
                 {user.role === 'student' && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-secondary block mb-1">
                         College

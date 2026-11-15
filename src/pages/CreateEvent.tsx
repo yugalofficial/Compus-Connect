@@ -171,17 +171,17 @@ export default function CreateEvent() {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="px-4 sm:px-6 pt-6 pb-12 max-w-2xl mx-auto"
+      className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-2xl mx-auto"
     >
-      <header className="flex items-center gap-4 mb-8">
+      <header className="flex items-center gap-3 sm:gap-4 mb-8">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center"
+          className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center shrink-0"
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             {id ? 'Edit Event' : 'Create Event'}
           </h1>
@@ -191,7 +191,7 @@ export default function CreateEvent() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Poster + Core Info */}
-        <div className="glass p-6 rounded-3xl border border-border-subtle space-y-5">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle space-y-5">
           <div>
             <label className="relative block aspect-video rounded-2xl overflow-hidden border border-dashed border-border-subtle cursor-pointer group bg-secondary/5">
               <img
@@ -199,7 +199,7 @@ export default function CreateEvent() {
                 alt="Event cover preview"
                 className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
               />
-              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white opacity-90 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white opacity-90 group-hover:opacity-100 transition-opacity p-3 text-center">
                 <Camera size={28} className="mb-1.5" />
                 <span className="text-xs font-bold">
                   {formData.posterUrl ? 'Change Event Poster' : 'Upload Event Poster (or use default cover)'}
@@ -213,12 +213,12 @@ export default function CreateEvent() {
               />
             </label>
 
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2 min-w-0">
               <Link2 size={14} className="text-secondary shrink-0" />
               <input
                 type="url"
                 placeholder="Or paste poster image URL (optional)"
-                className="flex-1 bg-background/50 border border-border-subtle rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 min-w-0 bg-background/50 border border-border-subtle rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                 value={formData.posterUrl.startsWith('data:') ? '' : formData.posterUrl}
                 onChange={(e) => setFormData({ ...formData, posterUrl: e.target.value })}
               />
@@ -226,7 +226,7 @@ export default function CreateEvent() {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, posterUrl: '' })}
-                  className="text-xs text-secondary hover:text-foreground font-semibold px-2"
+                  className="text-xs text-secondary hover:text-foreground font-semibold px-2 shrink-0"
                 >
                   Reset
                 </button>
@@ -255,12 +255,12 @@ export default function CreateEvent() {
 
           <div>
             <label className="text-xs text-secondary font-semibold mb-1.5 block">Event URL Slug</label>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-secondary font-mono">/events/</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs text-secondary font-mono shrink-0">/events/</span>
               <input
                 type="text"
                 required
-                className="flex-1 bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-primary text-xs font-mono"
+                className="flex-1 min-w-0 bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-primary text-xs font-mono"
                 placeholder="tech-fest-2026"
                 value={formData.slug}
                 onChange={(e) =>
@@ -282,7 +282,7 @@ export default function CreateEvent() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-secondary font-semibold mb-1.5 block">Category</label>
               <select
@@ -317,28 +317,28 @@ export default function CreateEvent() {
 
         {/* Date & Venue */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="glass p-4 rounded-3xl border border-border-subtle">
+          <div className="glass p-4 rounded-3xl border border-border-subtle min-w-0">
             <label className="text-xs text-secondary font-semibold mb-2 block">Date & Time</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4" />
+            <div className="relative min-w-0">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4 pointer-events-none" />
               <input
                 type="datetime-local"
                 required
-                className="w-full bg-transparent text-sm font-semibold pl-9 focus:outline-none"
+                className="w-full min-w-0 max-w-full bg-transparent text-sm font-semibold pl-9 focus:outline-none"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
           </div>
-          <div className="glass p-4 rounded-3xl border border-border-subtle">
+          <div className="glass p-4 rounded-3xl border border-border-subtle min-w-0">
             <label className="text-xs text-secondary font-semibold mb-2 block">Venue</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4" />
+            <div className="relative min-w-0">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4 pointer-events-none" />
               <input
                 type="text"
                 required
                 placeholder="Main Auditorium"
-                className="w-full bg-transparent text-sm font-semibold pl-9 focus:outline-none"
+                className="w-full min-w-0 bg-transparent text-sm font-semibold pl-9 focus:outline-none"
                 value={formData.venue}
                 onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
               />
@@ -347,7 +347,7 @@ export default function CreateEvent() {
         </div>
 
         {/* Pricing, Food Coupon, QR Window */}
-        <div className="glass p-6 rounded-3xl border border-border-subtle space-y-5">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -428,7 +428,7 @@ export default function CreateEvent() {
           </div>
 
           {formData.hasFoodCoupon && (
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
               <div>
                 <label className="text-xs text-secondary font-semibold mb-1.5 block">
                   Coupon Value / Student (INR)
@@ -462,29 +462,29 @@ export default function CreateEvent() {
 
           <div className="pt-4 border-t border-border-subtle space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                 <QrCode size={18} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-bold">QR Scan Window (Optional)</p>
                 <p className="text-xs text-secondary">Attendance check-in schedule</p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              <div className="min-w-0">
                 <label className="text-xs text-secondary font-semibold mb-1 block">Start Time</label>
                 <input
                   type="datetime-local"
-                  className="w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs font-semibold"
+                  className="w-full min-w-0 max-w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs font-semibold"
                   value={formData.qrScanStart}
                   onChange={(e) => setFormData({ ...formData, qrScanStart: e.target.value })}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-xs text-secondary font-semibold mb-1 block">End Time</label>
                 <input
                   type="datetime-local"
-                  className="w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs font-semibold"
+                  className="w-full min-w-0 max-w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs font-semibold"
                   value={formData.qrScanEnd}
                   onChange={(e) => setFormData({ ...formData, qrScanEnd: e.target.value })}
                 />

@@ -308,8 +308,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-background">
-      <div className="p-4 sm:px-6 flex items-center justify-between max-w-5xl mx-auto w-full">
+    <div className="min-h-dvh flex flex-col bg-background pt-[env(safe-area-inset-top,0px)]">
+      <div className="px-4 py-3 sm:px-6 flex items-center justify-between max-w-5xl mx-auto w-full">
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-foreground transition-colors"
@@ -319,8 +319,8 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4 pb-12">
-        <div className="w-full max-w-lg glass rounded-3xl p-6 sm:p-8 shadow-xl">
+      <div className="flex-1 flex items-center justify-center p-4 pb-10">
+        <div className="w-full max-w-lg glass rounded-3xl p-5 sm:p-8 shadow-xl">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">
               {mode === 'login' && 'Sign in to Campus Connect'}
@@ -360,7 +360,7 @@ export default function Login() {
           )}
 
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-medium leading-relaxed">
+            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-medium leading-relaxed break-words">
               {error}
             </div>
           )}

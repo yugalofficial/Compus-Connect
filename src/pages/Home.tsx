@@ -95,12 +95,12 @@ export default function Home() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-10">
+    <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-7xl mx-auto space-y-8 sm:space-y-10">
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
-        <div>
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="min-w-0">
           <p className="text-xs font-semibold text-primary mb-1">Student Portal</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words">
             Welcome back, {user?.name?.split(' ')[0] || 'Student'}
           </h1>
           <p className="text-secondary text-sm mt-1">
@@ -108,8 +108,8 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="glass px-4 py-3 rounded-2xl flex items-center gap-3 self-start sm:self-auto">
-          <div className="w-9 h-9 bg-accent/15 rounded-xl flex items-center justify-center text-accent">
+        <div className="glass px-4 py-3 rounded-2xl flex items-center gap-3 self-start sm:self-auto shrink-0">
+          <div className="w-9 h-9 bg-accent/15 rounded-xl flex items-center justify-center text-accent shrink-0">
             <Award size={18} />
           </div>
           <div>
@@ -122,45 +122,45 @@ export default function Home() {
       {/* My Registrations & Tickets */}
       {myRegistrations.length > 0 && (
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Calendar size={20} className="text-primary" /> My Active Passes
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 min-w-0 truncate">
+              <Calendar size={20} className="text-primary shrink-0" /> My Active Passes
             </h2>
-            <span className="text-xs text-secondary tabular-nums">{myRegistrations.length} registrations</span>
+            <span className="text-xs text-secondary tabular-nums shrink-0">{myRegistrations.length} registrations</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="glass rounded-2xl p-4">
-              <p className="text-2xl font-extrabold tabular-nums text-primary">{myRegistrations.length}</p>
-              <p className="text-xs text-secondary mt-0.5">Registered</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="glass rounded-2xl p-3 sm:p-4 min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold tabular-nums text-primary truncate">{myRegistrations.length}</p>
+              <p className="text-[11px] sm:text-xs text-secondary mt-0.5 truncate">Registered</p>
             </div>
-            <div className="glass rounded-2xl p-4">
-              <p className="text-2xl font-extrabold tabular-nums text-emerald-500">
+            <div className="glass rounded-2xl p-3 sm:p-4 min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold tabular-nums text-emerald-500 truncate">
                 {myRegistrations.filter((r) => r.attended).length}
               </p>
-              <p className="text-xs text-secondary mt-0.5">Attended</p>
+              <p className="text-[11px] sm:text-xs text-secondary mt-0.5 truncate">Attended</p>
             </div>
-            <div className="glass rounded-2xl p-4">
-              <p className="text-2xl font-extrabold tabular-nums text-accent">
+            <div className="glass rounded-2xl p-3 sm:p-4 min-w-0">
+              <p className="text-xl sm:text-2xl font-extrabold tabular-nums text-accent truncate">
                 {myRegistrations.filter((r) => r.couponRedeemed).length}
               </p>
-              <p className="text-xs text-secondary mt-0.5">Meals Claimed</p>
+              <p className="text-[11px] sm:text-xs text-secondary mt-0.5 truncate">Meals Claimed</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myRegistrations.map((reg) => (
-              <div key={reg.id} className="glass rounded-2xl p-4 flex flex-col justify-between gap-4">
-                <div className="flex items-center gap-3.5">
+              <div key={reg.id} className="glass rounded-2xl p-4 flex flex-col justify-between gap-4 min-w-0">
+                <div className="flex items-center gap-3.5 min-w-0">
                   <img
                     src={getEventCover(reg.event?.posterUrl, reg.event?.category)}
                     alt={reg.event?.title || 'Event'}
                     className="w-14 h-14 rounded-xl object-cover shrink-0 bg-slate-900"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-sm truncate">{reg.event?.title || 'Campus Event'}</h4>
-                    <p className="text-xs text-secondary mt-0.5">
+                    <p className="text-xs text-secondary mt-0.5 truncate">
                       {reg.event?.date ? format(new Date(reg.event.date), 'MMM d · h:mm a') : 'TBA'}
                     </p>
                   </div>
@@ -275,8 +275,8 @@ export default function Home() {
             {societies.map((soc) => {
               const isFollowing = followedIds.includes(soc.id);
               return (
-                <div key={soc.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4">
-                  <Link to={`/society/${soc.id}`} className="flex items-center gap-3 group">
+                <div key={soc.id} className="glass rounded-2xl p-5 flex flex-col justify-between gap-4 min-w-0">
+                  <Link to={`/society/${soc.id}`} className="flex items-center gap-3 group min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
                       {soc.logoUrl ? (
                         <img src={soc.logoUrl} alt={soc.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -284,12 +284,12 @@ export default function Home() {
                         getInitials(soc.name)
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors flex items-center gap-1">
-                        {soc.name}
+                        <span className="truncate">{soc.name}</span>
                         <CheckCircle2 size={13} className="text-primary shrink-0" />
                       </h4>
-                      <p className="text-xs text-secondary tabular-nums">
+                      <p className="text-xs text-secondary tabular-nums truncate">
                         {soc.category} · {soc.followerCount || 0} followers
                       </p>
                     </div>

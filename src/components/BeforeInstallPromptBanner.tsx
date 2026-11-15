@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Download, MoreVertical, PlusSquare, Share, Smartphone, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import {
   BeforeInstallPromptEvent,
   clearCachedDeferredPrompt,
@@ -14,6 +15,7 @@ const DISMISS_COOLDOWN_MS = 1000 * 60 * 60 * 24 * 3; // 3 days
 
 export const BeforeInstallPromptBanner: React.FC = () => {
   const { user, isApproved } = useAuth();
+  const isOnline = useOnlineStatus();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -92,7 +94,8 @@ export const BeforeInstallPromptBanner: React.FC = () => {
     setShowInstructionsModal(true);
   };
 
-  const shouldShowBanner = !isInstalled && !dismissed && (!!deferredPrompt || isIOS || isAndroid);
+  const shouldShowBanner =
+    isOnline && !isInstalled && !dismissed && (!!deferredPrompt || isIOS || isAndroid);
 
   if (isInstalled || (!shouldShowBanner && !showInstructionsModal)) {
     return null;
@@ -118,8 +121,8 @@ export const BeforeInstallPromptBanner: React.FC = () => {
             }}
             className="fixed inset-x-3 sm:inset-x-auto sm:right-5 sm:w-[400px] md:!bottom-5 z-[145]"
           >
-            <div className="glass rounded-2xl p-3.5 sm:p-4 border border-primary/35 shadow-2xl flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+            <div className="glass rounded-2xl p-3 sm:p-4 border border-primary/35 shadow-2xl flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                 <Smartphone size={20} />
               </div>
 

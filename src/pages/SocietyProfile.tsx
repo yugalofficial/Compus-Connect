@@ -154,15 +154,15 @@ export default function SocietyProfile() {
   const xUrl = normalizeSocialUrl(society.socials?.twitter, 'twitter');
 
   return (
-    <div className="pb-12 max-w-4xl mx-auto">
-      <div className="relative h-52 sm:h-64 bg-primary/15 sm:rounded-b-3xl overflow-hidden">
+    <div className="w-full pb-4 max-w-4xl mx-auto">
+      <div className="relative h-48 sm:h-64 bg-primary/15 sm:rounded-b-3xl overflow-hidden">
         <img
           src={society.bannerUrl || HERO_BANNER_IMAGE}
           className="w-full h-full object-cover"
           alt={society.name}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
-        <div className="absolute top-5 left-5 flex gap-2">
+        <div className="absolute top-4 left-4 sm:top-5 sm:left-5 flex gap-2">
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center"
@@ -183,7 +183,7 @@ export default function SocietyProfile() {
       </div>
 
       <div className="px-4 sm:px-6 -mt-12 relative z-10">
-        <div className="w-24 h-24 rounded-3xl glass p-1.5 border border-border-subtle shadow-xl mb-4 bg-surface flex items-center justify-center overflow-hidden">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl glass p-1.5 border border-border-subtle shadow-xl mb-4 bg-surface flex items-center justify-center overflow-hidden">
           {society.logoUrl ? (
             <img
               src={society.logoUrl}
@@ -196,10 +196,10 @@ export default function SocietyProfile() {
         </div>
 
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
-              {society.name}
-              <CheckCircle2 size={20} className="text-primary" />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2 break-words">
+              <span className="break-words">{society.name}</span>
+              <CheckCircle2 size={20} className="text-primary shrink-0" />
             </h1>
             <p className="text-secondary font-bold text-xs uppercase tracking-wider mt-1">
               {society.category} Society
@@ -208,7 +208,7 @@ export default function SocietyProfile() {
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={handleFollow}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+            className={`px-5 sm:px-6 py-2.5 rounded-xl font-bold text-sm transition-all shrink-0 ${
               isFollowing
                 ? 'glass border border-border-subtle text-secondary hover:text-foreground'
                 : 'bg-primary text-white shadow-lg shadow-primary/25'
@@ -218,20 +218,20 @@ export default function SocietyProfile() {
           </motion.button>
         </div>
 
-        <div className="flex gap-6 mb-8 text-sm font-semibold tabular-nums">
+        <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold tabular-nums">
           <div className="flex items-center gap-2">
-            <Users size={16} className="text-primary" />
+            <Users size={16} className="text-primary shrink-0" />
             <span>{society.followerCount || 0} Followers</span>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-primary" />
+            <Calendar size={16} className="text-primary shrink-0" />
             <span>{events.length} Events</span>
           </div>
         </div>
 
-        <div className="glass p-6 rounded-3xl border border-border-subtle mb-10">
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle mb-10">
           <h2 className="text-base font-bold mb-2">About</h2>
-          <p className="text-secondary text-sm leading-relaxed whitespace-pre-line">
+          <p className="text-secondary text-sm leading-relaxed whitespace-pre-line break-words">
             {society.description}
           </p>
 

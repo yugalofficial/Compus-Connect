@@ -555,27 +555,27 @@ export default function ManageEvent() {
   const redeemedCount = registrations.filter((r) => r.couponRedeemed).length;
 
   return (
-    <div className="px-4 sm:px-6 pt-6 pb-12 max-w-5xl mx-auto space-y-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-4 max-w-5xl mx-auto space-y-6 sm:space-y-8">
+      <header className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 glass border border-border-subtle rounded-full flex items-center justify-center shrink-0"
           >
             <ArrowLeft size={18} />
           </button>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-extrabold tracking-tight truncate">{event.title}</h1>
-            <p className="text-xs text-secondary font-medium">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">{event.title}</h1>
+            <p className="text-xs text-secondary font-medium truncate">
               {event.category} · {event.venue}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={exportToPDF}
-            className="px-4 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-2 hover:border-primary/40"
+            className="px-3.5 sm:px-4 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-2 hover:border-primary/40 whitespace-nowrap"
           >
             <Download size={14} />
             Export PDF
@@ -687,38 +687,38 @@ export default function ManageEvent() {
           </h3>
           <div className="space-y-3">
             {canteenPayments.map((payment) => (
-              <div
-                key={payment.id}
-                className="glass p-5 rounded-3xl border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-bold text-sm">
-                      {payment.vendor?.vendorName || payment.vendor?.name || 'Canteen Partner'}
-                    </h4>
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        payment.status === 'paid'
-                          ? 'bg-emerald-500/15 text-emerald-500'
-                          : payment.status === 'approved'
-                          ? 'bg-blue-500/15 text-blue-500'
-                          : 'bg-amber-500/15 text-amber-500'
-                      }`}
-                    >
-                      {payment.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-secondary tabular-nums">
-                    {payment.studentCount} students · ₹{payment.amount.toLocaleString()} total
-                    {(payment.vendorUpiId || payment.vendor?.upiId) &&
-                      ` · UPI: ${payment.vendorUpiId || payment.vendor?.upiId}`}
-                  </p>
-                  {payment.upiTransactionId && (
-                    <p className="text-xs text-emerald-500 font-mono mt-1">
-                      Txn ID: {payment.upiTransactionId}
+                <div
+                  key={payment.id}
+                  className="glass p-5 rounded-3xl border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                      <h4 className="font-bold text-sm truncate">
+                        {payment.vendor?.vendorName || payment.vendor?.name || 'Canteen Partner'}
+                      </h4>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                          payment.status === 'paid'
+                            ? 'bg-emerald-500/15 text-emerald-500'
+                            : payment.status === 'approved'
+                            ? 'bg-blue-500/15 text-blue-500'
+                            : 'bg-amber-500/15 text-amber-500'
+                        }`}
+                      >
+                        {payment.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-secondary tabular-nums break-words">
+                      {payment.studentCount} students · ₹{payment.amount.toLocaleString()} total
+                      {(payment.vendorUpiId || payment.vendor?.upiId) &&
+                        ` · UPI: ${payment.vendorUpiId || payment.vendor?.upiId}`}
                     </p>
-                  )}
-                </div>
+                    {payment.upiTransactionId && (
+                      <p className="text-xs text-emerald-500 font-mono mt-1 break-all">
+                        Txn ID: {payment.upiTransactionId}
+                      </p>
+                    )}
+                  </div>
 
                 <div className="flex items-center gap-2">
                   {payment.status !== 'paid' ? (
@@ -827,7 +827,7 @@ export default function ManageEvent() {
           <h3 className="text-lg font-bold">
             Registrations <span className="text-secondary font-medium tabular-nums">({registrations.length})</span>
           </h3>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {(['all', 'pending', 'confirmed'] as const).map((tab) => (
               <button
                 key={tab}
@@ -841,12 +841,12 @@ export default function ManageEvent() {
                 {tab}
               </button>
             ))}
-            <div className="relative">
+            <div className="relative w-full sm:w-52">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search student or ticket…"
-                className="glass border border-border-subtle py-2 pl-9 pr-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary w-48"
+                className="glass border border-border-subtle py-2 pl-9 pr-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -891,9 +891,9 @@ export default function ManageEvent() {
 
                   {reg.status === 'pending' && (
                     <div className="pt-3 border-t border-border-subtle flex flex-wrap items-center justify-between gap-3">
-                      <div className="text-xs text-secondary space-y-1">
+                      <div className="text-xs text-secondary space-y-1 min-w-0">
                         {reg.transactionId && (
-                          <p className="font-mono font-semibold text-foreground">
+                          <p className="font-mono font-semibold text-foreground break-all">
                             TXN: {reg.transactionId}
                           </p>
                         )}
@@ -913,7 +913,7 @@ export default function ManageEvent() {
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => rejectRegistration(reg)}
                           className="px-3.5 py-2 border border-red-500/30 text-red-500 rounded-xl text-xs font-bold hover:bg-red-500/10"
