@@ -58,8 +58,8 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import axios from 'axios';
 import { getInitials } from '../lib/media';
+import { sendTransactionalEmail, syncToSheetsAndDrive } from '../lib/api';
 
 type AdminTab = 'overview' | 'users' | 'events' | 'registrations' | 'societies' | 'payments' | 'settings';
 
@@ -200,14 +200,15 @@ export default function AdminDashboard() {
         createdAt: serverTimestamp(),
       });
       if (emailSubject && targetUser.email) {
-        axios
-          .post('/api/email/send', {
+        sendTransactionalEmail(
+          {
             to: targetUser.email,
             subject: emailSubject,
             templateName: 'notification',
             params: { title, message },
-          })
-          .catch(() => {});
+          },
+          platformSettings.appsScriptUrl
+        ).catch(() => {});
       }
     } catch {
       // Non-blocking notification failure
@@ -580,14 +581,17 @@ export default function AdminDashboard() {
   const handleSyncSheets = async () => {
     setSyncing(true);
     try {
-      const response = await axios.post('/api/sheets/sync', { action: 'setup' });
-      if (response.data?.success) {
+      const result = await syncToSheetsAndDrive(
+        { action: 'setup' },
+        settingsForm.appsScriptUrl || platformSettings.appsScriptUrl
+      );
+      if (result?.success) {
         showToast('Google Sheets & Drive synchronized successfully.', 'success');
       } else {
-        throw new Error(response.data?.error || 'Sync returned an error');
+        throw new Error(result?.error || 'Sync could not complete');
       }
     } catch (err: any) {
-      showToast(err?.response?.data?.error || err?.message || 'Google Sheets sync failed', 'error');
+      showToast(err?.message || 'Google Sheets sync failed', 'error');
     } finally {
       setSyncing(false);
     }
@@ -1548,6 +1552,19 @@ export default function AdminDashboard() {
                 className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-secondary block mb-1.5">
+              Google Apps Script Web App URL (/exec) — Optional for GitHub Pages Direct Sync
+            </label>
+            <input
+              type="url"
+              value={settingsForm.appsScriptUrl || ''}
+              onChange={(e) => setSettingsForm({ ...settingsForm, appsScriptUrl: e.target.value })}
+              placeholder="https://script.google.com/macros/s/.../exec"
+              className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm font-mono"
+            />
           </div>
 
           <button

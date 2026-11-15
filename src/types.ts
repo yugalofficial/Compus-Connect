@@ -30,6 +30,7 @@ export interface PlatformSettings {
   requireCanteenApproval: boolean;
   platformUpiId: string;
   supportEmail: string;
+  appsScriptUrl?: string;
 }
 
 export interface Event {

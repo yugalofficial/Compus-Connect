@@ -117,5 +117,13 @@ To make yourself an admin:
 3. Find your user document in the `users` collection.
 4. Change the `role` field to `admin`.
 
+## 6. GitHub Pages Live Deployment 🌐
+1. Push this repository to GitHub (`main` or `master` branch).
+2. Open your GitHub repository **Settings → Pages**.
+3. Under **Build and deployment → Source**, choose **GitHub Actions**.
+4. The included `.github/workflows/deploy.yml` workflow will automatically build with the repository's base path, generate `404.html` and `.nojekyll`, and deploy the live site and PWA.
+5. In [Firebase Console (`yugal-digital` Authorized Domains)](https://console.firebase.google.com/project/yugal-digital/authentication/settings), open **Authentication → Settings → Authorized domains → Add domain** and add `yugalofficial.github.io` (domain hostname only, without `https://` or `/Compus-Connect`) so Google Sign-In works on `https://yugalofficial.github.io/Compus-Connect`.
+6. *(Optional)* In the **Super Admin Console → Settings** tab inside the live app, paste your deployed Google Apps Script `/exec` URL to enable Google Sheets & Drive syncing directly from GitHub Pages.
+
 ---
 **Techvora09 - Campus Connect v2.0**

@@ -32,9 +32,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 import { getEventCover, compressImageToDataUrl } from '../lib/media';
+import { syncToSheetsAndDrive, createGatewayOrder, verifyGatewayPayment } from '../lib/api';
 
 export default function EventDetails() {
   const { id, slug } = useParams();
@@ -186,12 +186,13 @@ export default function EventDetails() {
       await sendRegistrationNotifications(event, 'confirmed');
       showToast('Registration confirmed! Your QR pass is ready.', 'success');
 
-      axios
-        .post('/api/sheets/sync', {
+      syncToSheetsAndDrive(
+        {
           action: 'register',
           data: { ...newReg, eventTitle: event.title },
-        })
-        .catch(() => {});
+        },
+        platformSettings.appsScriptUrl
+      ).catch(() => {});
     } catch (err: any) {
       showToast(err?.message || 'Registration failed', 'error');
     } finally {
@@ -212,14 +213,14 @@ export default function EventDetails() {
     if (!event || !user) return;
     setRegistering(true);
     try {
-      const orderRes = await axios.post('/api/payment/order', {
+      const orderRes = await createGatewayOrder({
         amount: event.fee || 0,
         currency: 'INR',
         receipt: `${user.uid.slice(0, 8)}_${event.id.slice(0, 8)}`,
       });
-      const orderId = orderRes.data?.id || `order_demo_${Date.now()}`;
+      const orderId = orderRes?.id || `order_demo_${Date.now()}`;
       const paymentId = `pay_${Date.now()}`;
-      await axios.post('/api/payments/verify', {
+      await verifyGatewayPayment({
         paymentId,
         orderId,
         signature: 'verified_gateway',

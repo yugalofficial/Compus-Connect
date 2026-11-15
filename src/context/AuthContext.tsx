@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   requireCanteenApproval: true,
   platformUpiId: 'campusconnect@upi',
   supportEmail: 'yugalofficial63@gmail.com',
+  appsScriptUrl: '',
 };
 
 interface AuthContextType {

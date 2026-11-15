@@ -36,7 +36,7 @@ export default function App() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <Router>
+          <Router basename={import.meta.env.BASE_URL}>
             <div className="min-h-dvh flex flex-col bg-background text-foreground transition-colors duration-200">
               <RoleHeader />
 

@@ -41,7 +41,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
   private handleGoHome = (): void => {
     this.setState({ hasError: false, error: null, errorInfo: null });
     if (typeof window !== 'undefined') {
-      window.location.assign('/');
+      window.location.assign(import.meta.env.BASE_URL || '/');
     }
   };
 

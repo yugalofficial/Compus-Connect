@@ -16,8 +16,8 @@ import {
   QrCode,
   Link2,
 } from 'lucide-react';
-import axios from 'axios';
 import { compressImageToDataUrl, getEventCover } from '../lib/media';
+import { syncToSheetsAndDrive } from '../lib/api';
 
 export default function CreateEvent() {
   const { user, platformSettings } = useAuth();
@@ -145,10 +145,13 @@ export default function CreateEvent() {
         const docRef = await addDoc(collection(db, 'events'), eventData);
 
         try {
-          await axios.post('/api/sheets/sync', {
-            action: 'createEvent',
-            data: { id: docRef.id, ...eventData, organizerName: user.name },
-          });
+          await syncToSheetsAndDrive(
+            {
+              action: 'createEvent',
+              data: { id: docRef.id, ...eventData, organizerName: user.name },
+            },
+            platformSettings.appsScriptUrl
+          );
         } catch {
           // Sheets sync optional
         }

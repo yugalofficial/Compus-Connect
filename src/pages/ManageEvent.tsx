@@ -36,10 +36,10 @@ import {
   X,
 } from 'lucide-react';
 import QRScanner from '../components/QRScanner';
-import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { compressImageToDataUrl, getInitials } from '../lib/media';
+import { syncToSheetsAndDrive } from '../lib/api';
 
 type EnrichedRegistration = Registration & { student?: User };
 type EnrichedPayment = CanteenPayment & { vendor?: User };
@@ -48,7 +48,7 @@ export default function ManageEvent() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, platformSettings } = useAuth();
   const { showToast, confirm } = useToast();
 
   const [event, setEvent] = useState<Event | null>(null);
@@ -450,16 +450,19 @@ export default function ManageEvent() {
     try {
       if (proofDataUrl) {
         try {
-          const response = await axios.post('/api/sheets/sync', {
-            action: 'uploadPaymentProof',
-            eventId: event.id,
-            paymentId: settlingPayment.id,
-            fileName: `PaymentProof_${settlingPayment.id}.jpg`,
-            fileData: proofDataUrl.split(',')[1],
-            mimeType: 'image/jpeg',
-          });
-          if (response.data?.success && response.data?.fileUrl) {
-            finalProofUrl = response.data.fileUrl;
+          const response = await syncToSheetsAndDrive(
+            {
+              action: 'uploadPaymentProof',
+              eventId: event.id,
+              paymentId: settlingPayment.id,
+              fileName: `PaymentProof_${settlingPayment.id}.jpg`,
+              fileData: proofDataUrl.split(',')[1],
+              mimeType: 'image/jpeg',
+            },
+            platformSettings.appsScriptUrl
+          );
+          if (response?.success && response?.fileUrl) {
+            finalProofUrl = response.fileUrl;
           }
         } catch {
           // Apps Script Drive upload optional — Firestore stores compressed proof

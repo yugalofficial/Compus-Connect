@@ -34,7 +34,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getRoleHomePath } from '../components/ProtectedRoute';
 import ThemeToggle from '../components/ThemeToggle';
-import axios from 'axios';
+import { sendTransactionalEmail } from '../lib/api';
 
 export default function Login() {
   const { user, firebaseUser, loading: authLoading, platformSettings } = useAuth();
@@ -97,6 +97,10 @@ export default function Login() {
     }
     if (code === 'auth/popup-closed-by-user') {
       return 'Google sign-in popup was closed before completing.';
+    }
+    if (code === 'auth/unauthorized-domain') {
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+      return `Domain "${host}" is not authorized for Google Sign-In yet. Add "${host}" under Firebase Console -> Authentication -> Settings -> Authorized domains.`;
     }
     return err?.message || 'Authentication failed. Please try again.';
   };
@@ -275,15 +279,19 @@ export default function Login() {
         createdAt: new Date().toISOString(),
       });
 
-      // Trigger welcome email in background
-      axios
-        .post('/api/email/send', {
+      // Trigger welcome email in background (uses backend or Apps Script on GitHub Pages)
+      sendTransactionalEmail(
+        {
           to: email.trim(),
           subject: 'Welcome to Campus Connect!',
           templateName: 'welcome',
-          params: { name: name.trim(), appUrl: window.location.origin },
-        })
-        .catch(() => {});
+          params: {
+            name: name.trim(),
+            appUrl: `${window.location.origin}${import.meta.env.BASE_URL}`,
+          },
+        },
+        platformSettings.appsScriptUrl
+      ).catch(() => {});
 
       showToast(
         status === 'approved'
