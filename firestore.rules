@@ -90,6 +90,12 @@ service cloud.firestore {
              (!('fee' in data) || data.fee is number) &&
              (!('couponCost' in data) || data.couponCost is number) &&
              (!('maxCoupons' in data) || data.maxCoupons is number) &&
+             (!('waitlistCount' in data) || (data.waitlistCount is number && data.waitlistCount >= 0)) &&
+             (!('allowWaitlist' in data) || data.allowWaitlist is bool) &&
+             (!('isCancelled' in data) || data.isCancelled is bool) &&
+             (!('cancellationReason' in data) || (data.cancellationReason is string && data.cancellationReason.size() <= 500)) &&
+             (!('requirements' in data) || (data.requirements is string && data.requirements.size() <= 2000)) &&
+             (!('mapUrl' in data) || (data.mapUrl is string && data.mapUrl.size() <= 500)) &&
              (!('posterUrl' in data) || (data.posterUrl is string && data.posterUrl.size() <= 800000));
     }
 
@@ -97,7 +103,7 @@ service cloud.firestore {
       return data.keys().hasAll(['userId', 'eventId', 'status', 'attended', 'couponRedeemed']) &&
              data.userId is string && data.userId.size() <= 128 &&
              data.eventId is string && data.eventId.size() <= 128 &&
-             data.status in ['pending', 'confirmed', 'rejected'] &&
+             data.status in ['pending', 'confirmed', 'rejected', 'waitlisted'] &&
              data.attended is bool &&
              data.couponRedeemed is bool &&
              (!('paymentScreenshot' in data) || (data.paymentScreenshot is string && data.paymentScreenshot.size() <= 800000));
@@ -142,7 +148,71 @@ service cloud.firestore {
              data.name is string && data.name.size() > 0 && data.name.size() <= 150 &&
              data.description is string && data.description.size() <= 3000 &&
              data.category is string && data.category.size() <= 60 &&
-             data.organizerId is string && data.organizerId.size() <= 128;
+             data.organizerId is string && data.organizerId.size() <= 128 &&
+             (!('approvalStatus' in data) || data.approvalStatus in ['approved', 'pending', 'rejected']) &&
+             (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 700000)) &&
+             (!('bannerUrl' in data) || (data.bannerUrl is string && data.bannerUrl.size() <= 800000));
+    }
+
+    function isValidSocietyApplication(data) {
+      return data.keys().hasAll(['societyId', 'societyName', 'organizerId', 'userId', 'userName', 'roleInterest', 'status', 'createdAt']) &&
+             data.societyId is string && data.societyId.size() > 0 && data.societyId.size() <= 128 &&
+             data.societyName is string && data.societyName.size() > 0 && data.societyName.size() <= 150 &&
+             data.organizerId is string && data.organizerId.size() > 0 && data.organizerId.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() > 0 && data.userName.size() <= 120 &&
+             data.roleInterest is string && data.roleInterest.size() > 0 && data.roleInterest.size() <= 120 &&
+             (!('statement' in data) || (data.statement is string && data.statement.size() <= 1500)) &&
+             (!('reviewNote' in data) || (data.reviewNote is string && data.reviewNote.size() <= 500)) &&
+             data.status in ['pending', 'approved', 'rejected'] &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidCertificateCampaign(data) {
+      return data.keys().hasAll(['eventId', 'eventTitle', 'organizerId', 'templateCategory', 'orientation', 'title', 'issuingAuthority', 'issueDate']) &&
+             data.eventId is string && data.eventId.size() > 0 && data.eventId.size() <= 128 &&
+             data.eventTitle is string && data.eventTitle.size() > 0 && data.eventTitle.size() <= 200 &&
+             data.organizerId is string && data.organizerId.size() > 0 && data.organizerId.size() <= 128 &&
+             data.templateCategory is string && data.templateCategory.size() > 0 && data.templateCategory.size() <= 120 &&
+             data.orientation in ['landscape', 'portrait'] &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.issuingAuthority is string && data.issuingAuthority.size() > 0 && data.issuingAuthority.size() <= 200 &&
+             data.issueDate is string && data.issueDate.size() > 0 && data.issueDate.size() <= 64 &&
+             (!('backgroundImageUrl' in data) || (data.backgroundImageUrl is string && data.backgroundImageUrl.size() <= 700000)) &&
+             (!('universityLogoUrl' in data) || (data.universityLogoUrl is string && data.universityLogoUrl.size() <= 400000)) &&
+             (!('societyLogoUrl' in data) || (data.societyLogoUrl is string && data.societyLogoUrl.size() <= 400000)) &&
+             (!('signatureImageUrl' in data) || (data.signatureImageUrl is string && data.signatureImageUrl.size() <= 400000));
+    }
+
+    function isValidCertificate(data) {
+      return data.keys().hasAll(['certificateId', 'campaignId', 'eventId', 'eventTitle', 'registrationId', 'userId', 'holderName', 'organizerId', 'issuingAuthority', 'templateCategory', 'orientation', 'title', 'issueDate', 'status', 'issuedAt']) &&
+             data.certificateId is string && data.certificateId.size() > 0 && data.certificateId.size() <= 128 &&
+             data.campaignId is string && data.campaignId.size() > 0 && data.campaignId.size() <= 128 &&
+             data.eventId is string && data.eventId.size() > 0 && data.eventId.size() <= 128 &&
+             data.eventTitle is string && data.eventTitle.size() > 0 && data.eventTitle.size() <= 200 &&
+             data.registrationId is string && data.registrationId.size() > 0 && data.registrationId.size() <= 160 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.holderName is string && data.holderName.size() > 0 && data.holderName.size() <= 120 &&
+             data.organizerId is string && data.organizerId.size() > 0 && data.organizerId.size() <= 128 &&
+             data.issuingAuthority is string && data.issuingAuthority.size() > 0 && data.issuingAuthority.size() <= 200 &&
+             data.templateCategory is string && data.templateCategory.size() > 0 && data.templateCategory.size() <= 120 &&
+             data.orientation in ['landscape', 'portrait'] &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.issueDate is string && data.issueDate.size() > 0 && data.issueDate.size() <= 64 &&
+             data.status in ['valid', 'revoked'] &&
+             data.issuedAt is string && data.issuedAt.size() <= 64 &&
+             (!('revokedReason' in data) || (data.revokedReason is string && data.revokedReason.size() <= 500));
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['actorId', 'actorName', 'action', 'targetType', 'targetId', 'details', 'createdAt']) &&
+             data.actorId is string && data.actorId.size() > 0 && data.actorId.size() <= 128 &&
+             data.actorName is string && data.actorName.size() > 0 && data.actorName.size() <= 120 &&
+             data.action is string && data.action.size() > 0 && data.action.size() <= 120 &&
+             data.targetType in ['user', 'event', 'society', 'certificate', 'payment', 'system'] &&
+             data.targetId is string && data.targetId.size() > 0 && data.targetId.size() <= 160 &&
+             data.details is string && data.details.size() <= 1000 &&
+             data.createdAt is string && data.createdAt.size() <= 64;
     }
 
     // ===============================================================
@@ -170,7 +240,7 @@ service cloud.firestore {
           request.resource.data.uid == resource.data.uid &&
           request.resource.data.role == resource.data.role &&
           request.resource.data.status == resource.data.status &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'college', 'course', 'interests', 'photoURL', 'followedSocieties', 'organisation', 'vendorName', 'upiId', 'razorpayId', 'societyId', 'updatedAt'])) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'college', 'course', 'interests', 'photoURL', 'followedSocieties', 'organisation', 'vendorName', 'upiId', 'razorpayId', 'societyId', 'notificationPreferences', 'updatedAt'])) ||
         (isOrganizer() &&
           request.resource.data.uid == resource.data.uid &&
           request.resource.data.role == resource.data.role &&
@@ -197,7 +267,8 @@ service cloud.firestore {
       allow update: if isValidId(eventId) && isValidEvent(request.resource.data) && (
         isAdmin() ||
         (isOrganizer() && resource.data.organizerId == request.auth.uid && request.resource.data.organizerId == resource.data.organizerId) ||
-        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredCount']) && request.resource.data.registeredCount == resource.data.registeredCount + 1)
+        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredCount']) && request.resource.data.registeredCount == resource.data.registeredCount + 1) ||
+        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['waitlistCount']))
       );
       allow delete: if isValidId(eventId) && (isAdmin() || (isOrganizer() && resource.data.organizerId == request.auth.uid));
     }
@@ -252,6 +323,74 @@ service cloud.firestore {
         (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']))
       );
       allow delete: if isValidId(socId) && isAdmin();
+    }
+
+    // Society Membership Applications
+    match /society_applications/{appId} {
+      allow get, list: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid ||
+        resource.data.organizerId == request.auth.uid
+      );
+      allow create: if isValidId(appId) && isApproved() &&
+        isValidSocietyApplication(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        exists(/databases/$(database)/documents/societies/$(request.resource.data.societyId));
+      allow update: if isValidId(appId) && isValidSocietyApplication(request.resource.data) && (
+        isAdmin() ||
+        (isOrganizer() && resource.data.organizerId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedAt', 'reviewNote']))
+      );
+      allow delete: if isValidId(appId) && (isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid));
+    }
+
+    // Digital Certificate Campaigns
+    match /certificate_campaigns/{campaignId} {
+      allow get, list: if isAuthenticated() && (isAdmin() || resource.data.organizerId == request.auth.uid);
+      allow create: if isValidId(campaignId) && isOrganizer() &&
+        isValidCertificateCampaign(request.resource.data) &&
+        (request.resource.data.organizerId == request.auth.uid || isAdmin()) &&
+        exists(/databases/$(database)/documents/events/$(request.resource.data.eventId));
+      allow update: if isValidId(campaignId) && isValidCertificateCampaign(request.resource.data) && (
+        isAdmin() ||
+        (isOrganizer() && resource.data.organizerId == request.auth.uid && request.resource.data.organizerId == resource.data.organizerId)
+      );
+      allow delete: if isValidId(campaignId) && (isAdmin() || (isOrganizer() && resource.data.organizerId == request.auth.uid));
+    }
+
+    // Issued Digital Certificates (public single-doc verification by exact ID; scoped list; verified registration & attendance required on create)
+    match /certificates/{certId} {
+      allow get: if true;
+      allow list: if isAdmin() || (isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.organizerId == request.auth.uid
+      ));
+      allow create: if isValidId(certId) && isOrganizer() &&
+        isValidCertificate(request.resource.data) &&
+        request.resource.data.status == 'valid' &&
+        (request.resource.data.organizerId == request.auth.uid || isAdmin()) &&
+        exists(/databases/$(database)/documents/events/$(request.resource.data.eventId)) &&
+        (isAdmin() || get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.organizerId == request.auth.uid) &&
+        exists(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)) &&
+        get(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)).data.userId == request.resource.data.userId &&
+        get(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)).data.eventId == request.resource.data.eventId &&
+        get(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)).data.status == 'confirmed' &&
+        get(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)).data.attended == true;
+      allow update: if isValidId(certId) && isAdmin() && isValidCertificate(request.resource.data) &&
+        request.resource.data.certificateId == resource.data.certificateId &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.eventId == resource.data.eventId;
+      allow delete: if isValidId(certId) && isAdmin();
+    }
+
+    // Audit Logs (Immutable activity & revocation log)
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isValidId(logId) && (isAdmin() || isOrganizer()) &&
+        isValidAuditLog(request.resource.data) &&
+        request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // Notifications

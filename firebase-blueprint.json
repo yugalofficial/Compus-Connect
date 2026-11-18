@@ -23,6 +23,7 @@
         "organisation": { "type": "string", "maxLength": 150 },
         "upiId": { "type": "string", "maxLength": 120 },
         "razorpayId": { "type": "string", "maxLength": 120 },
+        "notificationPreferences": { "type": "object" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
@@ -37,8 +38,11 @@
         "title": { "type": "string", "maxLength": 200 },
         "description": { "type": "string", "maxLength": 5000 },
         "date": { "type": "string", "format": "date-time" },
+        "registrationDeadline": { "type": "string" },
         "venue": { "type": "string", "maxLength": 200 },
+        "mapUrl": { "type": "string", "maxLength": 500 },
         "organizerId": { "type": "string", "maxLength": 128 },
+        "organizerName": { "type": "string", "maxLength": 120 },
         "societyId": { "type": "string", "maxLength": 128 },
         "category": { "type": "string", "maxLength": 60 },
         "type": { "type": "string", "enum": ["free", "paid"] },
@@ -47,9 +51,17 @@
         "maxCoupons": { "type": "number" },
         "registrationLimit": { "type": "number" },
         "registeredCount": { "type": "number" },
+        "allowWaitlist": { "type": "boolean" },
+        "waitlistCount": { "type": "number" },
         "posterUrl": { "type": "string", "maxLength": 700000 },
+        "galleryUrls": { "type": "array", "items": { "type": "string" } },
+        "schedule": { "type": "array" },
+        "speakers": { "type": "array" },
+        "requirements": { "type": "string", "maxLength": 2000 },
         "slug": { "type": "string", "maxLength": 220 },
         "status": { "type": "string", "enum": ["upcoming", "ongoing", "completed"] },
+        "isCancelled": { "type": "boolean" },
+        "cancellationReason": { "type": "string", "maxLength": 500 },
         "hasFoodCoupon": { "type": "boolean" },
         "isCanteenPaymentDone": { "type": "boolean" },
         "qrVisible": { "type": "boolean" },
@@ -72,7 +84,7 @@
         "userName": { "type": "string" },
         "userEmail": { "type": "string" },
         "eventId": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"] },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "rejected", "waitlisted"] },
         "paymentId": { "type": "string" },
         "transactionId": { "type": "string" },
         "paymentScreenshot": { "type": "string" },
@@ -99,9 +111,97 @@
         "logoUrl": { "type": "string", "maxLength": 500000 },
         "bannerUrl": { "type": "string", "maxLength": 700000 },
         "followerCount": { "type": "number" },
-        "organizerId": { "type": "string" }
+        "organizerId": { "type": "string" },
+        "approvalStatus": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "facultyCoordinator": { "type": "object" },
+        "coreTeam": { "type": "array" },
+        "announcements": { "type": "array" },
+        "galleryUrls": { "type": "array" }
       },
       "required": ["name", "description", "category", "organizerId"]
+    },
+    "society_applications": {
+      "title": "SocietyApplication",
+      "description": "Student membership applications to campus societies",
+      "type": "object",
+      "properties": {
+        "societyId": { "type": "string", "maxLength": 128 },
+        "societyName": { "type": "string", "maxLength": 150 },
+        "organizerId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 120 },
+        "userEmail": { "type": "string", "maxLength": 160 },
+        "roleInterest": { "type": "string", "maxLength": 120 },
+        "statement": { "type": "string", "maxLength": 1500 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "reviewNote": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "reviewedAt": { "type": "string" }
+      },
+      "required": ["societyId", "organizerId", "userId", "userName", "roleInterest", "status", "createdAt"]
+    },
+    "certificate_campaigns": {
+      "title": "CertificateCampaign",
+      "description": "Organiser digital certificate template campaign linked to an event",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "maxLength": 128 },
+        "eventTitle": { "type": "string", "maxLength": 200 },
+        "organizerId": { "type": "string", "maxLength": 128 },
+        "societyId": { "type": "string", "maxLength": 128 },
+        "templateCategory": { "type": "string", "maxLength": 120 },
+        "orientation": { "type": "string", "enum": ["landscape", "portrait"] },
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 1200 },
+        "issuingAuthority": { "type": "string", "maxLength": 200 },
+        "facultyCoordinator": { "type": "string", "maxLength": 150 },
+        "organiserName": { "type": "string", "maxLength": 150 },
+        "signatoryDesignation": { "type": "string", "maxLength": 150 },
+        "issueDate": { "type": "string", "maxLength": 64 },
+        "publishedCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["eventId", "eventTitle", "organizerId", "templateCategory", "orientation", "title", "issuingAuthority", "issueDate"]
+    },
+    "certificates": {
+      "title": "IssuedCertificate",
+      "description": "Verifiable issued digital certificate without private PII",
+      "type": "object",
+      "properties": {
+        "certificateId": { "type": "string", "maxLength": 128 },
+        "campaignId": { "type": "string", "maxLength": 128 },
+        "eventId": { "type": "string", "maxLength": 128 },
+        "eventTitle": { "type": "string", "maxLength": 200 },
+        "registrationId": { "type": "string", "maxLength": 160 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "holderName": { "type": "string", "maxLength": 120 },
+        "organizerId": { "type": "string", "maxLength": 128 },
+        "issuingAuthority": { "type": "string", "maxLength": 200 },
+        "templateCategory": { "type": "string", "maxLength": 120 },
+        "orientation": { "type": "string", "enum": ["landscape", "portrait"] },
+        "title": { "type": "string", "maxLength": 200 },
+        "issueDate": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["valid", "revoked"] },
+        "revokedReason": { "type": "string", "maxLength": 500 },
+        "issuedAt": { "type": "string" }
+      },
+      "required": ["certificateId", "campaignId", "eventId", "eventTitle", "registrationId", "userId", "holderName", "organizerId", "issuingAuthority", "templateCategory", "status", "issuedAt"]
+    },
+    "audit_logs": {
+      "title": "AuditLog",
+      "description": "Immutable operational and revocation audit trail",
+      "type": "object",
+      "properties": {
+        "actorId": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 120 },
+        "action": { "type": "string", "maxLength": 120 },
+        "targetType": { "type": "string", "maxLength": 60 },
+        "targetId": { "type": "string", "maxLength": 160 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["actorId", "actorName", "action", "targetType", "targetId", "details", "createdAt"]
     },
     "attendance": {
       "title": "Attendance",
@@ -172,7 +272,10 @@
         "requireOrganizerApproval": { "type": "boolean" },
         "requireCanteenApproval": { "type": "boolean" },
         "platformUpiId": { "type": "string" },
-        "supportEmail": { "type": "string" }
+        "supportEmail": { "type": "string" },
+        "appsScriptUrl": { "type": "string" },
+        "lastSheetsSyncAt": { "type": "string" },
+        "lastSheetsSyncStatus": { "type": "string" }
       }
     }
   },
@@ -192,6 +295,22 @@
     "societies/{societyId}": {
       "schema": "societies",
       "description": "Society documents"
+    },
+    "society_applications/{applicationId}": {
+      "schema": "society_applications",
+      "description": "Society membership applications"
+    },
+    "certificate_campaigns/{campaignId}": {
+      "schema": "certificate_campaigns",
+      "description": "Digital certificate templates and campaigns"
+    },
+    "certificates/{certificateId}": {
+      "schema": "certificates",
+      "description": "Verifiable issued digital certificates"
+    },
+    "audit_logs/{logId}": {
+      "schema": "audit_logs",
+      "description": "Immutable admin & certificate audit logs"
     },
     "attendance/{attendanceId}": {
       "schema": "attendance",

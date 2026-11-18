@@ -30,11 +30,18 @@ import {
   Coffee,
   X,
   CheckCircle2,
+  Clock,
+  ExternalLink,
+  AlertTriangle,
+  Award,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
 import { getEventCover, compressImageToDataUrl } from '../lib/media';
 import { syncToSheetsAndDrive, createGatewayOrder, verifyGatewayPayment } from '../lib/api';
+import PublicNavbar from '../components/PublicNavbar';
+import { useDocumentSeo } from '../lib/seo';
+import { buildCertificateId } from '../lib/certificateTemplates';
 
 export default function EventDetails() {
   const { id, slug } = useParams();
@@ -52,6 +59,32 @@ export default function EventDetails() {
   const [transactionId, setTransactionId] = useState('');
   const [screenshot, setScreenshot] = useState<string>('');
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [issuedCertId, setIssuedCertId] = useState<string | null>(null);
+
+  useDocumentSeo({
+    title: event ? `${event.title} | Campus Connect` : 'Campus Event | Campus Connect',
+    description:
+      event?.description?.slice(0, 155) ||
+      'View campus event schedule, venue details, speaker lineup, and instant QR registration on Campus Connect.',
+    canonicalPath: event ? `events/${event.slug || event.id}` : 'explore',
+    structuredData: event
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: event.title,
+          description: event.description,
+          startDate: event.date,
+          location: {
+            '@type': 'Place',
+            name: event.venue,
+          },
+          organizer: {
+            '@type': 'Organization',
+            name: event.organizerName || 'Campus Connect',
+          },
+        }
+      : undefined,
+  });
 
   useEffect(() => {
     let active = true;
@@ -103,18 +136,25 @@ export default function EventDetails() {
     );
 
     let unsubReg: (() => void) | null = null;
+    let unsubCert: (() => void) | null = null;
     if (user) {
       const regId = `${user.uid}_${resolvedEventId}`;
       unsubReg = onSnapshot(doc(db, 'registrations', regId), (snap) => {
         setRegistration(snap.exists() ? ({ id: snap.id, ...snap.data() } as Registration) : null);
       });
+      const certId = buildCertificateId(resolvedEventId, user.uid);
+      unsubCert = onSnapshot(doc(db, 'certificates', certId), (snap) => {
+        setIssuedCertId(snap.exists() ? certId : null);
+      }, () => setIssuedCertId(null));
     } else {
       setRegistration(null);
+      setIssuedCertId(null);
     }
 
     return () => {
       unsubEvent();
       if (unsubReg) unsubReg();
+      if (unsubCert) unsubCert();
     };
   }, [resolvedEventId, user?.uid]);
 
@@ -200,8 +240,50 @@ export default function EventDetails() {
     }
   };
 
-  const handleRegisterClick = async () => {
+  const completeWaitlistRegistration = async () => {
     if (!event || !user) return;
+    setRegistering(true);
+    try {
+      const regId = `${user.uid}_${event.id}`;
+      const newReg: Registration = {
+        id: regId,
+        userId: user.uid,
+        userName: user.name,
+        userEmail: user.email,
+        eventId: event.id,
+        status: 'waitlisted',
+        attended: false,
+        couponRedeemed: false,
+        createdAt: new Date().toISOString(),
+      };
+      await setDoc(doc(db, 'registrations', regId), newReg);
+      await updateDoc(doc(db, 'events', event.id), {
+        waitlistCount: increment(1),
+      });
+      setRegistration(newReg);
+      showToast('Added to the waitlist! You will be notified if a seat opens.', 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Could not join waitlist.', 'error');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleRegisterClick = async () => {
+    if (!event) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (event.isCancelled) {
+      showToast('Registrations are closed because this event was cancelled.', 'error');
+      return;
+    }
+    const isFull = (event.registeredCount || 0) >= event.registrationLimit;
+    if (isFull && event.allowWaitlist && !registration) {
+      await completeWaitlistRegistration();
+      return;
+    }
     if (event.type === 'paid' && !registration) {
       setShowPayment(true);
       return;
@@ -322,15 +404,23 @@ export default function EventDetails() {
   const targetUpiId = event.upiId || platformSettings.platformUpiId || 'campusconnect@upi';
   const upiUri = `upi://pay?pa=${encodeURIComponent(targetUpiId)}&pn=${encodeURIComponent('Campus Connect')}&am=${event.fee || 0}&cu=INR`;
 
+  const isFull = (event.registeredCount || 0) >= event.registrationLimit;
+  const deadlinePassed = Boolean(
+    event.registrationDeadline && new Date(event.registrationDeadline).getTime() < Date.now()
+  );
+
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5 sm:pt-6 pb-4 space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-foreground"
-        >
-          <ArrowLeft size={16} /> Back
-        </button>
+    <div className="min-h-dvh flex flex-col bg-background text-foreground">
+      <PublicNavbar />
+
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5 sm:pt-6 pb-8 space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-foreground"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
         <button
           onClick={handleShare}
           className="px-3.5 py-2 rounded-xl glass text-xs font-semibold flex items-center gap-1.5 hover:text-primary transition-colors shrink-0"
@@ -399,20 +489,169 @@ export default function EventDetails() {
             <p className="text-sm text-secondary leading-relaxed whitespace-pre-line break-words">{event.description}</p>
           </div>
 
+          {event.isCancelled && (
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-500">
+              <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sm">This event has been cancelled</p>
+                {event.cancellationReason && (
+                  <p className="text-xs mt-0.5 opacity-90">{event.cancellationReason}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* V3 Event Info: Map, Deadline, Requirements, Schedule, Speakers, Gallery */}
+          {(event.mapUrl || event.registrationDeadline || event.organizerName) && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              {event.registrationDeadline && (
+                <div className="p-3.5 rounded-2xl bg-background/60 border border-border-subtle">
+                  <p className="text-secondary flex items-center gap-1.5 mb-1">
+                    <Clock size={13} className="text-primary" /> Registration Deadline
+                  </p>
+                  <p className="font-semibold">
+                    {format(new Date(event.registrationDeadline), 'MMM d, yyyy · h:mm a')}
+                  </p>
+                </div>
+              )}
+              {event.organizerName && (
+                <div className="p-3.5 rounded-2xl bg-background/60 border border-border-subtle">
+                  <p className="text-secondary mb-1">Hosted By</p>
+                  <p className="font-semibold truncate">{event.organizerName}</p>
+                </div>
+              )}
+              {event.mapUrl && (
+                <a
+                  href={event.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-2xl bg-background/60 border border-border-subtle hover:border-primary/40 flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-secondary mb-0.5">Campus Directions</p>
+                    <p className="font-semibold text-primary">Open Map Link</p>
+                  </div>
+                  <ExternalLink size={15} className="text-primary" />
+                </a>
+              )}
+            </div>
+          )}
+
+          {event.requirements && (
+            <div className="p-4 rounded-2xl bg-background/60 border border-border-subtle space-y-1">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary">
+                Participation Requirements
+              </h3>
+              <p className="text-xs sm:text-sm text-foreground leading-relaxed">{event.requirements}</p>
+            </div>
+          )}
+
+          {event.schedule && event.schedule.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-base font-bold">Event Schedule</h3>
+              <div className="space-y-2">
+                {event.schedule.map((slot, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-background/60 border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono font-bold text-primary shrink-0">
+                        {slot.time || 'TBA'}
+                      </span>
+                      <span className="font-semibold">{slot.title}</span>
+                    </div>
+                    {slot.speaker && (
+                      <span className="text-xs text-secondary">{slot.speaker}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {event.speakers && event.speakers.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-base font-bold">Speakers & Guests</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {event.speakers.map((sp, idx) => (
+                  <div key={idx} className="p-3.5 rounded-2xl bg-background/60 border border-border-subtle">
+                    <p className="font-bold text-sm">{sp.name}</p>
+                    <p className="text-xs text-secondary">{sp.role}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {event.galleryUrls && event.galleryUrls.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-base font-bold">Event Gallery</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {event.galleryUrls.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`${event.title} photo ${idx + 1}`}
+                    className="aspect-video w-full rounded-xl object-cover border border-border-subtle"
+                    referrerPolicy="no-referrer"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {issuedCertId && (
+            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Award size={20} className="text-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-bold">Certificate Published</p>
+                  <p className="text-xs text-secondary font-mono">{issuedCertId}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/verify-certificate/${issuedCertId}`)}
+                className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:opacity-90"
+              >
+                View & Download Certificate
+              </button>
+            </div>
+          )}
+
           {/* Registration & Ticket Section */}
-          {!registration ? (
+          {!user ? (
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full py-4 rounded-2xl bg-primary text-white font-bold text-sm sm:text-base hover:opacity-90 transition-opacity"
+            >
+              Sign In to Register
+            </button>
+          ) : !registration ? (
             <button
               onClick={handleRegisterClick}
-              disabled={registering || (event.registeredCount || 0) >= event.registrationLimit}
+              disabled={
+                registering ||
+                Boolean(event.isCancelled) ||
+                deadlinePassed ||
+                (isFull && !event.allowWaitlist)
+              }
               className="w-full py-4 rounded-2xl bg-primary text-white font-bold text-sm sm:text-base hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {registering
                 ? 'Processing...'
-                : (event.registeredCount || 0) >= event.registrationLimit
-                  ? 'Registrations Full'
-                  : event.type === 'paid'
-                    ? `Register & Pay ₹${event.fee}`
-                    : 'Register for Free'}
+                : event.isCancelled
+                  ? 'Event Cancelled'
+                  : deadlinePassed
+                    ? 'Registration Deadline Passed'
+                    : isFull && event.allowWaitlist
+                      ? 'Join Event Waitlist'
+                      : isFull
+                        ? 'Registrations Full'
+                        : event.type === 'paid'
+                          ? `Register & Pay ₹${event.fee}`
+                          : 'Register for Free'}
             </button>
           ) : (
             <div className="space-y-6 pt-2">
@@ -432,14 +671,18 @@ export default function EventDetails() {
                       ? 'Registration Confirmed'
                       : registration.status === 'rejected'
                         ? 'Payment Verification Declined'
-                        : 'Payment Pending Organiser Verification'}
+                        : registration.status === 'waitlisted'
+                          ? 'On Event Waitlist'
+                          : 'Payment Pending Organiser Verification'}
                   </p>
                   <p className="text-xs opacity-85">
                     {registration.status === 'confirmed'
                       ? `Ticket ID: ${registration.ticketId || registration.id.slice(0, 10)}`
                       : registration.status === 'rejected'
                         ? 'Please contact the event organiser or resubmit a valid transaction ID.'
-                        : 'Your QR ticket will appear automatically once the organiser verifies your transaction.'}
+                        : registration.status === 'waitlisted'
+                          ? 'You will automatically receive confirmation when a seat opens.'
+                          : 'Your QR ticket will appear automatically once the organiser verifies your transaction.'}
                   </p>
                 </div>
               </div>
@@ -631,6 +874,7 @@ export default function EventDetails() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

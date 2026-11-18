@@ -8,6 +8,7 @@ import {
   addDoc,
   increment,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db, provisionUserCredentials, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +23,8 @@ import {
   UserRole,
   UserStatus,
   PlatformSettings,
+  IssuedCertificate,
+  AuditLog,
 } from '../types';
 import {
   Users,
@@ -43,9 +46,15 @@ import {
   Image as ImageIcon,
   Coffee,
   ExternalLink,
+  Award,
+  History,
+  BarChart3,
+  Ban,
+  Download,
+  Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -60,8 +69,20 @@ import {
 } from 'recharts';
 import { getInitials } from '../lib/media';
 import { sendTransactionalEmail, syncToSheetsAndDrive } from '../lib/api';
+import { QRCodeCanvas } from 'qrcode.react';
+import { downloadCertificatePdf } from '../lib/certificatePdf';
+import { getVerificationUrl } from '../lib/certificateTemplates';
 
-type AdminTab = 'overview' | 'users' | 'events' | 'registrations' | 'societies' | 'payments' | 'settings';
+type AdminTab =
+  | 'overview'
+  | 'users'
+  | 'events'
+  | 'registrations'
+  | 'societies'
+  | 'payments'
+  | 'certificates'
+  | 'audit'
+  | 'settings';
 
 export default function AdminDashboard() {
   const { user, platformSettings } = useAuth();
@@ -116,9 +137,73 @@ export default function AdminDashboard() {
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(platformSettings);
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // V3 Certificates, Audit Logs & Broadcast State
+  const [certificates, setCertificates] = useState<IssuedCertificate[]>([]);
+  const [certSearch, setCertSearch] = useState('');
+  const [certStatusFilter, setCertStatusFilter] = useState<'all' | 'valid' | 'revoked'>('all');
+  const [revokeTarget, setRevokeTarget] = useState<IssuedCertificate | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+  const [revokingCert, setRevokingCert] = useState(false);
+
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [auditSearch, setAuditSearch] = useState('');
+
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
   useEffect(() => {
     setSettingsForm(platformSettings);
   }, [platformSettings]);
+
+  useEffect(() => {
+    const unsubCerts = onSnapshot(
+      collection(db, 'certificates'),
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IssuedCertificate));
+        list.sort((a, b) => new Date(b.issuedAt || 0).getTime() - new Date(a.issuedAt || 0).getTime());
+        setCertificates(list);
+      },
+      (err) => console.error('Admin certificates listener error:', err)
+    );
+
+    const unsubLogs = onSnapshot(
+      collection(db, 'audit_logs'),
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLog));
+        list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        setAuditLogs(list);
+      },
+      (err) => console.error('Admin audit logs listener error:', err)
+    );
+
+    return () => {
+      unsubCerts();
+      unsubLogs();
+    };
+  }, []);
+
+  const writeAuditLog = async (
+    action: string,
+    targetType: AuditLog['targetType'],
+    targetId: string,
+    details: string
+  ) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'audit_logs'), {
+        actorId: user.uid,
+        actorName: user.name || 'Super Admin',
+        action,
+        targetType,
+        targetId,
+        details,
+        createdAt: new Date().toISOString(),
+      });
+    } catch {
+      // Non-blocking audit log write
+    }
+  };
 
   // Cross-profile lookup maps
   const userMap = useMemo(() => {
@@ -229,6 +314,12 @@ export default function AdminDashboard() {
           : `Your ${target.role} profile status was changed to ${status} by the Super Admin.`,
         `Campus Connect Account ${status.toUpperCase()}`
       );
+      await writeAuditLog(
+        `user_${status}`,
+        'user',
+        target.uid,
+        `Updated ${target.name} (${target.email}) status to ${status}`
+      );
       showToast(`${target.name} marked as ${status}.`, 'success');
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${target.uid}`);
@@ -258,6 +349,12 @@ export default function AdminDashboard() {
         'Profile Updated by Super Admin',
         `Your account role is set to ${editingUser.role} (${editingUser.status}).`
       );
+      await writeAuditLog(
+        'user_updated',
+        'user',
+        editingUser.uid,
+        `Edited ${editingUser.name}: role=${editingUser.role}, status=${editingUser.status}`
+      );
       showToast('User profile updated across all dashboards.', 'success');
       setEditingUser(null);
     } catch (err: any) {
@@ -282,6 +379,7 @@ export default function AdminDashboard() {
 
     try {
       await deleteDoc(doc(db, 'users', target.uid));
+      await writeAuditLog('user_deleted', 'user', target.uid, `Deleted user ${target.name} (${target.email})`);
       showToast(`Deleted user ${target.name}`, 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to delete user', 'error');
@@ -329,6 +427,12 @@ export default function AdminDashboard() {
         read: false,
         createdAt: serverTimestamp(),
       });
+      await writeAuditLog(
+        'user_provisioned',
+        'user',
+        uid,
+        `Provisioned approved ${newUserForm.role} account for ${createdUser.email}`
+      );
       showToast(`Created approved ${newUserForm.role} credentials for ${createdUser.email}`, 'success');
       setShowCreateUser(false);
       setNewUserForm({
@@ -359,6 +463,7 @@ export default function AdminDashboard() {
   const handleEventStatusChange = async (event: Event, status: Event['status']) => {
     try {
       await updateDoc(doc(db, 'events', event.id), { status, updatedAt: new Date().toISOString() });
+      await writeAuditLog('event_status_updated', 'event', event.id, `Changed "${event.title}" to ${status}`);
       showToast(`Event "${event.title}" set to ${status}.`, 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to update event status', 'error');
@@ -375,6 +480,7 @@ export default function AdminDashboard() {
     if (!ok) return;
     try {
       await deleteDoc(doc(db, 'events', event.id));
+      await writeAuditLog('event_deleted', 'event', event.id, `Deleted event "${event.title}"`);
       showToast('Event deleted.', 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to delete event', 'error');
@@ -411,6 +517,12 @@ export default function AdminDashboard() {
         read: false,
         createdAt: serverTimestamp(),
       });
+      await writeAuditLog(
+        'registration_verified',
+        'payment',
+        reg.id,
+        `Verified registration pass ${ticketId} for "${ev?.title || reg.eventId}"`
+      );
 
       showToast('Registration verified & ticket issued.', 'success');
     } catch (err: any) {
@@ -529,9 +641,75 @@ export default function AdminDashboard() {
       if (soc.organizerId && userMap[soc.organizerId]?.societyId === soc.id) {
         await updateDoc(doc(db, 'users', soc.organizerId), { societyId: '' });
       }
+      await writeAuditLog('society_deleted', 'society', soc.id, `Deleted society "${soc.name}"`);
       showToast(`Deleted society ${soc.name}.`, 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to delete society', 'error');
+    }
+  };
+
+  const handleModerateSociety = async (soc: Society, approvalStatus: 'approved' | 'rejected') => {
+    try {
+      await updateDoc(doc(db, 'societies', soc.id), { approvalStatus });
+      if (soc.organizerId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: soc.organizerId,
+          title: `Society ${approvalStatus === 'approved' ? 'Approved' : 'Rejected'}`,
+          message: `Your society "${soc.name}" was marked ${approvalStatus} by the Super Admin.`,
+          type: 'system',
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      await writeAuditLog(
+        `society_${approvalStatus}`,
+        'society',
+        soc.id,
+        `Set society "${soc.name}" approvalStatus=${approvalStatus}`
+      );
+      showToast(`Society "${soc.name}" ${approvalStatus}.`, 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update society status', 'error');
+    }
+  };
+
+  const handleRevokeCertificate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revokeTarget || !user) return;
+    if (!revokeReason.trim()) {
+      showToast('Please provide a reason for revocation.', 'error');
+      return;
+    }
+    setRevokingCert(true);
+    try {
+      const revokedAt = new Date().toISOString();
+      await updateDoc(doc(db, 'certificates', revokeTarget.id), {
+        status: 'revoked',
+        revokedReason: revokeReason.trim(),
+        revokedAt,
+        revokedBy: user.uid,
+      });
+      await addDoc(collection(db, 'notifications'), {
+        userId: revokeTarget.userId,
+        title: 'Certificate Revoked',
+        message: `Your certificate (${revokeTarget.certificateId}) for "${revokeTarget.eventTitle}" was revoked. Reason: ${revokeReason.trim()}`,
+        type: 'certificate',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      await writeAuditLog(
+        'certificate_revoked',
+        'certificate',
+        revokeTarget.certificateId,
+        `Revoked certificate for ${revokeTarget.holderName} (${revokeTarget.eventTitle}): ${revokeReason.trim()}`
+      );
+      showToast(`Certificate ${revokeTarget.certificateId} revoked.`, 'success');
+      setRevokeTarget(null);
+      setRevokeReason('');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to revoke certificate', 'error');
+    } finally {
+      setRevokingCert(false);
     }
   };
 
@@ -559,6 +737,12 @@ export default function AdminDashboard() {
           createdAt: serverTimestamp(),
         });
       }
+      await writeAuditLog(
+        `payout_${nextStatus}`,
+        'payment',
+        payment.id,
+        `Marked ₹${payment.amount} payout for "${payment.eventTitle}" as ${nextStatus}`
+      );
       showToast(`Payout updated to ${nextStatus}.`, 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to update payout', 'error');
@@ -569,7 +753,16 @@ export default function AdminDashboard() {
     e.preventDefault();
     setSavingSettings(true);
     try {
-      await setDoc(doc(db, 'settings', 'platform'), settingsForm, { merge: true });
+      const payload: PlatformSettings = {
+        requireStudentApproval: Boolean(settingsForm.requireStudentApproval),
+        requireOrganizerApproval: Boolean(settingsForm.requireOrganizerApproval),
+        requireCanteenApproval: Boolean(settingsForm.requireCanteenApproval),
+        platformUpiId: settingsForm.platformUpiId || '',
+        supportEmail: settingsForm.supportEmail || '',
+        appsScriptUrl: settingsForm.appsScriptUrl || '',
+      };
+      await setDoc(doc(db, 'settings', 'platform'), payload, { merge: true });
+      await writeAuditLog('settings_saved', 'system', 'platform', 'Updated platform approval & payment settings');
       showToast('Platform settings saved.', 'success');
     } catch (err: any) {
       showToast(err?.message || 'Failed to save settings', 'error');
@@ -578,19 +771,69 @@ export default function AdminDashboard() {
     }
   };
 
+  const handlePlatformBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastTitle.trim() || !broadcastMessage.trim()) {
+      showToast('Enter both announcement title and message.', 'error');
+      return;
+    }
+    setSendingBroadcast(true);
+    try {
+      const approvedUsers = users.filter((u) => u.status === 'approved');
+      await Promise.all(
+        approvedUsers.map((target) =>
+          addDoc(collection(db, 'notifications'), {
+            userId: target.uid,
+            title: broadcastTitle.trim(),
+            message: broadcastMessage.trim(),
+            type: 'system',
+            read: false,
+            createdAt: serverTimestamp(),
+          })
+        )
+      );
+      await writeAuditLog(
+        'platform_broadcast',
+        'system',
+        'all_users',
+        `Broadcast "${broadcastTitle.trim()}" sent to ${approvedUsers.length} approved accounts`
+      );
+      showToast(`Broadcast delivered to ${approvedUsers.length} approved users.`, 'success');
+      setBroadcastTitle('');
+      setBroadcastMessage('');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to send platform broadcast', 'error');
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
   const handleSyncSheets = async () => {
     setSyncing(true);
+    const nowIso = new Date().toISOString();
     try {
       const result = await syncToSheetsAndDrive(
         { action: 'setup' },
         settingsForm.appsScriptUrl || platformSettings.appsScriptUrl
       );
       if (result?.success) {
+        await setDoc(
+          doc(db, 'settings', 'platform'),
+          { lastSheetsSyncAt: nowIso, lastSheetsSyncStatus: 'success' },
+          { merge: true }
+        );
+        await writeAuditLog('sheets_sync', 'system', 'sheets', 'Google Sheets & Drive synchronized successfully');
         showToast('Google Sheets & Drive synchronized successfully.', 'success');
       } else {
         throw new Error(result?.error || 'Sync could not complete');
       }
     } catch (err: any) {
+      await setDoc(
+        doc(db, 'settings', 'platform'),
+        { lastSheetsSyncAt: nowIso, lastSheetsSyncStatus: 'error' },
+        { merge: true }
+      ).catch(() => {});
+      await writeAuditLog('sheets_sync_error', 'system', 'sheets', err?.message || 'Google Sheets sync failed');
       showToast(err?.message || 'Google Sheets sync failed', 'error');
     } finally {
       setSyncing(false);
@@ -646,6 +889,30 @@ export default function AdminDashboard() {
     return matchesSearch && matchesFilter;
   });
 
+  const filteredCertificates = certificates.filter((c) => {
+    const q = certSearch.toLowerCase();
+    const matchesSearch =
+      !q ||
+      (c.holderName || '').toLowerCase().includes(q) ||
+      (c.certificateId || '').toLowerCase().includes(q) ||
+      (c.eventTitle || '').toLowerCase().includes(q) ||
+      (c.templateCategory || '').toLowerCase().includes(q);
+    const matchesStatus = certStatusFilter === 'all' || c.status === certStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredAuditLogs = auditLogs.filter((log) => {
+    const q = auditSearch.toLowerCase();
+    if (!q) return true;
+    return (
+      (log.actorName || '').toLowerCase().includes(q) ||
+      (log.action || '').toLowerCase().includes(q) ||
+      (log.details || '').toLowerCase().includes(q) ||
+      (log.targetType || '').toLowerCase().includes(q) ||
+      (log.targetId || '').toLowerCase().includes(q)
+    );
+  });
+
   const COLORS = ['#2563eb', '#d97706', '#16a34a', '#7c3aed', '#0891b2'];
   const roleDistribution = [
     { name: 'Students', value: users.filter((u) => u.role === 'student').length },
@@ -680,6 +947,18 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-2.5 shrink-0">
+          <Link
+            to="/analytics"
+            className="px-4 py-2.5 rounded-xl glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:bg-secondary/10 transition-colors whitespace-nowrap"
+          >
+            <BarChart3 size={16} className="text-primary" /> Analytics
+          </Link>
+          <Link
+            to="/certificates/studio"
+            className="px-4 py-2.5 rounded-xl glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:bg-secondary/10 transition-colors whitespace-nowrap"
+          >
+            <Award size={16} className="text-primary" /> Certificate Studio
+          </Link>
           <button
             onClick={() => setShowCreateUser(true)}
             className="px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap"
@@ -707,6 +986,8 @@ export default function AdminDashboard() {
             { id: 'registrations', label: `Passes (${registrations.length})`, icon: Ticket },
             { id: 'societies', label: `Societies (${societies.length})`, icon: Building2 },
             { id: 'payments', label: `Payouts (${payments.length})`, icon: CreditCard },
+            { id: 'certificates', label: `Certificates (${certificates.length})`, icon: Award },
+            { id: 'audit', label: `Audit Logs (${auditLogs.length})`, icon: History },
             { id: 'settings', label: 'Settings', icon: Settings },
           ] as const
         ).map((tab) => (
@@ -1359,8 +1640,21 @@ export default function AdminDashboard() {
                           getInitials(soc.name)
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-base truncate">{soc.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-bold text-base truncate">{soc.name}</h4>
+                          <span
+                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                              soc.approvalStatus === 'rejected'
+                                ? 'bg-red-500/10 text-red-500'
+                                : soc.approvalStatus === 'pending'
+                                  ? 'bg-amber-500/10 text-amber-500'
+                                  : 'bg-emerald-500/10 text-emerald-500'
+                            }`}
+                          >
+                            {soc.approvalStatus || 'approved'}
+                          </span>
+                        </div>
                         <p className="text-xs text-primary font-semibold">{soc.category} Society</p>
                       </div>
                     </div>
@@ -1375,20 +1669,40 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="pt-3 border-t border-border-subtle flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => navigate(`/society/${soc.id}`)}
-                      className="px-3.5 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors flex items-center gap-1.5"
-                    >
-                      View Society <ExternalLink size={12} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSociety(soc)}
-                      className="w-8 h-8 rounded-lg border border-border-subtle flex items-center justify-center text-red-500 hover:bg-red-500/10"
-                      aria-label="Delete society"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="pt-3 border-t border-border-subtle flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      {soc.approvalStatus !== 'approved' && (
+                        <button
+                          onClick={() => handleModerateSociety(soc, 'approved')}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:opacity-90"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {soc.approvalStatus !== 'rejected' && (
+                        <button
+                          onClick={() => handleModerateSociety(soc, 'rejected')}
+                          className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-500 text-xs font-semibold hover:bg-amber-500 hover:text-white transition-colors"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => navigate(`/society/${soc.id}`)}
+                        className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
+                      >
+                        View <ExternalLink size={12} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSociety(soc)}
+                        className="w-8 h-8 rounded-lg border border-border-subtle flex items-center justify-center text-red-500 hover:bg-red-500/10"
+                        aria-label="Delete society"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -1505,76 +1819,344 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* SETTINGS TAB */}
-      {activeTab === 'settings' && (
-        <form onSubmit={handleSaveSettings} className="max-w-2xl glass rounded-2xl p-6 space-y-6">
-          <div>
-            <h2 className="text-lg font-bold mb-1">Approval & Platform Controls</h2>
-            <p className="text-xs text-secondary">Control onboarding approval rules and campus payment defaults.</p>
-          </div>
-
-          <div className="space-y-4">
-            {(
-              [
-                { key: 'requireStudentApproval', label: 'Require Super Admin approval for new Students' },
-                { key: 'requireOrganizerApproval', label: 'Require Super Admin approval for new Organisers' },
-                { key: 'requireCanteenApproval', label: 'Require Super Admin approval for new Canteen Vendors' },
-              ] as const
-            ).map((item) => (
-              <label key={item.key} className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-background border border-border-subtle cursor-pointer">
-                <span className="text-sm font-medium">{item.label}</span>
-                <input
-                  type="checkbox"
-                  checked={settingsForm[item.key]}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, [item.key]: e.target.checked })}
-                  className="w-4 h-4 accent-primary"
-                />
-              </label>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-secondary block mb-1.5">Platform Default UPI ID</label>
+      {/* CERTIFICATES TAB */}
+      {activeTab === 'certificates' && (
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 glass rounded-xl px-4 flex items-center gap-3">
+              <Search size={18} className="text-secondary shrink-0" />
               <input
                 type="text"
-                value={settingsForm.platformUpiId}
-                onChange={(e) => setSettingsForm({ ...settingsForm, platformUpiId: e.target.value })}
-                className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
+                placeholder="Search by Certificate ID, student name, event, or category..."
+                className="bg-transparent border-none outline-none w-full h-11 text-sm"
+                value={certSearch}
+                onChange={(e) => setCertSearch(e.target.value)}
               />
             </div>
-            <div>
-              <label className="text-xs font-semibold text-secondary block mb-1.5">Support Contact Email</label>
-              <input
-                type="email"
-                value={settingsForm.supportEmail}
-                onChange={(e) => setSettingsForm({ ...settingsForm, supportEmail: e.target.value })}
-                className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
-              />
-            </div>
+            <select
+              value={certStatusFilter}
+              onChange={(e) => setCertStatusFilter(e.target.value as any)}
+              className="glass rounded-xl px-4 h-11 text-sm font-medium outline-none"
+            >
+              <option value="all">All Credentials</option>
+              <option value="valid">Valid Only</option>
+              <option value="revoked">Revoked Only</option>
+            </select>
+            <Link
+              to="/certificates/studio"
+              className="px-4 h-11 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 shrink-0 hover:opacity-90"
+            >
+              <Award size={16} /> Open Studio
+            </Link>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-secondary block mb-1.5">
-              Google Apps Script Web App URL (/exec) — Optional for GitHub Pages Direct Sync
-            </label>
+          <div className="glass rounded-2xl overflow-hidden w-full min-w-0">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border-subtle text-xs font-semibold text-secondary">
+                    <th className="py-3.5 px-4">Credential ID</th>
+                    <th className="py-3.5 px-4">Recipient</th>
+                    <th className="py-3.5 px-4">Event & Template</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle text-sm">
+                  {filteredCertificates.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-secondary">
+                        No certificates match your filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCertificates.map((cert) => (
+                      <tr key={cert.id} className="hover:bg-secondary/5 transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-xs font-semibold">
+                          {cert.certificateId}
+                          <div className="hidden" aria-hidden="true">
+                            <QRCodeCanvas
+                              id={`admin-cert-qr-${cert.certificateId}`}
+                              value={getVerificationUrl(cert.certificateId)}
+                              size={120}
+                            />
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <p className="font-semibold">{cert.holderName}</p>
+                          <p className="text-xs text-secondary">Issued {cert.issueDate}</p>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <p className="font-medium text-sm">{cert.eventTitle}</p>
+                          <p className="text-xs text-secondary">{cert.templateCategory}</p>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {cert.status === 'revoked' ? (
+                            <div>
+                              <span className="text-xs font-bold text-red-500">Revoked</span>
+                              {cert.revokedReason && (
+                                <p className="text-[11px] text-secondary max-w-[180px] truncate" title={cert.revokedReason}>
+                                  {cert.revokedReason}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs font-bold text-emerald-500">Valid</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/verify-certificate/${cert.certificateId}`)}
+                              className="px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors"
+                            >
+                              Verify
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadCertificatePdf(
+                                  cert,
+                                  document.getElementById(`admin-cert-qr-${cert.certificateId}`) as HTMLCanvasElement | null
+                                )
+                              }
+                              className="w-8 h-8 rounded-lg border border-border-subtle flex items-center justify-center text-secondary hover:text-primary"
+                              title="Download PDF"
+                            >
+                              <Download size={14} />
+                            </button>
+                            {cert.status !== 'revoked' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRevokeTarget(cert);
+                                  setRevokeReason('');
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-xs font-semibold hover:bg-red-500 hover:text-white transition-colors flex items-center gap-1"
+                              >
+                                <Ban size={12} /> Revoke
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AUDIT LOGS TAB */}
+      {activeTab === 'audit' && (
+        <div className="space-y-5">
+          <div className="glass rounded-xl px-4 flex items-center gap-3">
+            <Search size={18} className="text-secondary shrink-0" />
             <input
-              type="url"
-              value={settingsForm.appsScriptUrl || ''}
-              onChange={(e) => setSettingsForm({ ...settingsForm, appsScriptUrl: e.target.value })}
-              placeholder="https://script.google.com/macros/s/.../exec"
-              className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm font-mono"
+              type="text"
+              placeholder="Search audit logs by actor, action, resource ID, or details..."
+              className="bg-transparent border-none outline-none w-full h-11 text-sm"
+              value={auditSearch}
+              onChange={(e) => setAuditSearch(e.target.value)}
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={savingSettings}
-            className="px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
-          >
-            {savingSettings ? 'Saving...' : 'Save Platform Settings'}
-          </button>
-        </form>
+          <div className="glass rounded-2xl overflow-hidden w-full min-w-0">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border-subtle text-xs font-semibold text-secondary">
+                    <th className="py-3.5 px-4">Timestamp</th>
+                    <th className="py-3.5 px-4">Actor</th>
+                    <th className="py-3.5 px-4">Scope & Action</th>
+                    <th className="py-3.5 px-4">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle text-sm">
+                  {filteredAuditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center text-secondary">
+                        No audit events recorded yet. Administrative actions are automatically logged here.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAuditLogs.slice(0, 100).map((log) => (
+                      <tr key={log.id} className="hover:bg-secondary/5 transition-colors">
+                        <td className="py-3.5 px-4 text-xs text-secondary whitespace-nowrap tabular-nums">
+                          {log.createdAt ? format(new Date(log.createdAt), 'dd MMM yyyy · HH:mm') : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-xs">{log.actorName}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase mr-2">
+                            {log.targetType}
+                          </span>
+                          <span className="font-mono text-xs">{log.action}</span>
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-secondary">{log.details}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS TAB */}
+      {activeTab === 'settings' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <form onSubmit={handleSaveSettings} className="glass rounded-2xl p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-bold mb-1">Approval & Platform Controls</h2>
+              <p className="text-xs text-secondary">Control onboarding approval rules and campus payment defaults.</p>
+            </div>
+
+            <div className="space-y-4">
+              {(
+                [
+                  { key: 'requireStudentApproval', label: 'Require Super Admin approval for new Students' },
+                  { key: 'requireOrganizerApproval', label: 'Require Super Admin approval for new Organisers' },
+                  { key: 'requireCanteenApproval', label: 'Require Super Admin approval for new Canteen Vendors' },
+                ] as const
+              ).map((item) => (
+                <label key={item.key} className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-background border border-border-subtle cursor-pointer">
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={settingsForm[item.key]}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, [item.key]: e.target.checked })}
+                    className="w-4 h-4 accent-primary"
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-secondary block mb-1.5">Platform Default UPI ID</label>
+                <input
+                  type="text"
+                  value={settingsForm.platformUpiId}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, platformUpiId: e.target.value })}
+                  className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-secondary block mb-1.5">Support Contact Email</label>
+                <input
+                  type="email"
+                  value={settingsForm.supportEmail}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, supportEmail: e.target.value })}
+                  className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-secondary block mb-1.5">
+                Google Apps Script Web App URL (/exec) — Optional for GitHub Pages Direct Sync
+              </label>
+              <input
+                type="url"
+                value={settingsForm.appsScriptUrl || ''}
+                onChange={(e) => setSettingsForm({ ...settingsForm, appsScriptUrl: e.target.value })}
+                placeholder="https://script.google.com/macros/s/.../exec"
+                className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm font-mono"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={savingSettings}
+              className="px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+            >
+              {savingSettings ? 'Saving...' : 'Save Platform Settings'}
+            </button>
+          </form>
+
+          <div className="space-y-6">
+            {/* Sheets & Drive Diagnostics */}
+            <div className="glass rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold">Google Sheets & Drive Sync</h2>
+                  <p className="text-xs text-secondary">Sync diagnostics persisted to platform settings.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSyncSheets}
+                  disabled={syncing}
+                  className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold flex items-center gap-1.5 hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+                  {syncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-background border border-border-subtle">
+                  <p className="text-secondary mb-1">Last Sync Timestamp</p>
+                  <p className="font-semibold tabular-nums">
+                    {platformSettings.lastSheetsSyncAt
+                      ? format(new Date(platformSettings.lastSheetsSyncAt), 'dd MMM yyyy · HH:mm')
+                      : 'Not run yet'}
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-xl bg-background border border-border-subtle">
+                  <p className="text-secondary mb-1">Last Status</p>
+                  <p
+                    className={`font-bold capitalize ${
+                      platformSettings.lastSheetsSyncStatus === 'success'
+                        ? 'text-emerald-500'
+                        : platformSettings.lastSheetsSyncStatus === 'error'
+                          ? 'text-red-500'
+                          : 'text-secondary'
+                    }`}
+                  >
+                    {platformSettings.lastSheetsSyncStatus || 'Idle'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Platform Broadcast Tool */}
+            <form onSubmit={handlePlatformBroadcast} className="glass rounded-2xl p-6 space-y-4">
+              <div>
+                <h2 className="text-lg font-bold">Platform-Wide Announcement</h2>
+                <p className="text-xs text-secondary">
+                  Send an instant campus notification to all approved users ({users.filter((u) => u.status === 'approved').length} accounts).
+                </p>
+              </div>
+              <input
+                type="text"
+                placeholder="Announcement headline"
+                value={broadcastTitle}
+                onChange={(e) => setBroadcastTitle(e.target.value)}
+                required
+                className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
+              />
+              <textarea
+                rows={3}
+                placeholder="Write announcement message for all students, organisers, and canteen partners..."
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                required
+                className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3.5 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={sendingBroadcast}
+                className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+              >
+                <Send size={15} />
+                {sendingBroadcast ? 'Broadcasting...' : 'Send Platform Broadcast'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* PROVISION USER MODAL */}
@@ -1878,6 +2460,64 @@ export default function AdminDashboard() {
                 className="max-h-[68dvh] w-auto object-contain"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVOKE CERTIFICATE MODAL */}
+      {revokeTarget && (
+        <div className="fixed inset-0 z-[1500] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={() => setRevokeTarget(null)} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md glass rounded-3xl p-6 shadow-2xl border border-border-subtle"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-red-500 flex items-center gap-2">
+                <Ban size={18} /> Revoke Certificate
+              </h2>
+              <button
+                type="button"
+                onClick={() => setRevokeTarget(null)}
+                className="w-9 h-9 rounded-xl border border-border-subtle flex items-center justify-center"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-secondary mb-4 leading-relaxed">
+              You are revoking credential <span className="font-mono font-bold text-foreground">{revokeTarget.certificateId}</span>{' '}
+              issued to <strong className="text-foreground">{revokeTarget.holderName}</strong> for{' '}
+              <strong className="text-foreground">{revokeTarget.eventTitle}</strong>. Public verification links will display a Revoked notice.
+            </p>
+            <form onSubmit={handleRevokeCertificate} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-secondary block mb-1.5">Revocation Reason</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="e.g., Issued in error / attendance mismatch"
+                  className="w-full bg-background border border-border-subtle rounded-xl py-2.5 px-3 text-sm"
+                />
+              </div>
+              <div className="flex gap-2.5 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRevokeTarget(null)}
+                  className="px-4 py-2.5 rounded-xl border border-border-subtle text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={revokingCert}
+                  className="px-4 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:opacity-90 disabled:opacity-50"
+                >
+                  {revokingCert ? 'Revoking...' : 'Confirm Revocation'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

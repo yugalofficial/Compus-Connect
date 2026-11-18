@@ -12,14 +12,23 @@ import {
   Utensils,
   Copy,
   Mail,
+  Award,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import PublicNavbar from '../components/PublicNavbar';
+import { useDocumentSeo } from '../lib/seo';
 
 export default function HowToUse() {
   const navigate = useNavigate();
   const { platformSettings } = useAuth();
   const { showToast } = useToast();
+
+  useDocumentSeo({
+    title: 'Platform Guide — Campus Connect',
+    description: 'Step-by-step guide to student passes, societies, canteen QR redemptions, digital certificates, and analytics.',
+    canonicalPath: '/how-to-use',
+  });
 
   const supportEmail = platformSettings.supportEmail || 'yugalofficial63@gmail.com';
 
@@ -57,8 +66,14 @@ export default function HowToUse() {
     {
       icon: Shield,
       title: '6. Super Admin Governance',
-      desc: 'The Super Admin approves or suspends accounts, provisions new user credentials directly, manages events and platform settings, settles payouts, and triggers Google Sheets / Drive sync.',
+      desc: 'The Super Admin approves or suspends accounts, provisions new user credentials directly, moderates societies, revokes invalid certificates, monitors immutable audit logs, and triggers Google Sheets / Drive sync.',
       role: 'Super Admin',
+    },
+    {
+      icon: Award,
+      title: '7. Verified Digital Certificates & Analytics',
+      desc: 'Organisers design custom A4 certificates with drag-and-drop layouts and issue QR-verified PDF credentials to checked-in attendees. Anyone can verify authenticity via Certificate ID on the public portal.',
+      role: 'Organisers & Students',
     },
   ];
 
@@ -72,7 +87,9 @@ export default function HowToUse() {
   };
 
   return (
-    <div className="w-full bg-background px-4 sm:px-6 pt-5 sm:pt-6 pb-8 max-w-3xl mx-auto">
+    <div className="min-h-dvh flex flex-col bg-background">
+      <PublicNavbar />
+      <div className="w-full px-4 sm:px-6 pt-5 sm:pt-6 pb-8 max-w-3xl mx-auto">
       <header className="flex items-center gap-3 sm:gap-4 mb-8">
         <button
           onClick={() => navigate(-1)}
@@ -138,6 +155,7 @@ export default function HowToUse() {
             </div>
           </div>
         </section>
+      </div>
       </div>
     </div>
   );

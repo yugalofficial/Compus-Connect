@@ -30,6 +30,11 @@ import ManageEvent from './pages/ManageEvent';
 import CreateSociety from './pages/CreateSociety';
 import CanteenPortal from './pages/CanteenPortal';
 import AdminDashboard from './pages/AdminDashboard';
+import Societies from './pages/Societies';
+import VerifyCertificate from './pages/VerifyCertificate';
+import CertificateStudio from './pages/CertificateStudio';
+import Certificates from './pages/Certificates';
+import Analytics from './pages/Analytics';
 
 function AppLayout() {
   const { user, isApproved } = useAuth();
@@ -60,28 +65,21 @@ function AppLayout() {
                     }
                   />
 
+                  {/* Public & Cross-Role Discovery Routes */}
+                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/societies" element={<Societies />} />
+                  <Route path="/society/:id" element={<SocietyProfile />} />
+                  <Route path="/event/:id" element={<EventDetails />} />
+                  <Route path="/events/:slug" element={<EventDetails />} />
+                  <Route path="/verify-certificate" element={<VerifyCertificate />} />
+                  <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
+
                   {/* Approved Authenticated Routes */}
                   <Route
-                    path="/event/:id"
+                    path="/certificates"
                     element={
                       <ProtectedRoute>
-                        <EventDetails />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/events/:slug"
-                    element={
-                      <ProtectedRoute>
-                        <EventDetails />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/explore"
-                    element={
-                      <ProtectedRoute>
-                        <Explore />
+                        <Certificates />
                       </ProtectedRoute>
                     }
                   />
@@ -106,14 +104,6 @@ function AppLayout() {
                     element={
                       <ProtectedRoute>
                         <Notifications />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/society/:id"
-                    element={
-                      <ProtectedRoute>
-                        <SocietyProfile />
                       </ProtectedRoute>
                     }
                   />
@@ -164,6 +154,30 @@ function AppLayout() {
                     element={
                       <OrganiserRoute>
                         <ManageEvent />
+                      </OrganiserRoute>
+                    }
+                  />
+                  <Route
+                    path="/manage/:id/certificates"
+                    element={
+                      <OrganiserRoute>
+                        <CertificateStudio />
+                      </OrganiserRoute>
+                    }
+                  />
+                  <Route
+                    path="/certificates/studio"
+                    element={
+                      <OrganiserRoute>
+                        <CertificateStudio />
+                      </OrganiserRoute>
+                    }
+                  />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <OrganiserRoute>
+                        <Analytics />
                       </OrganiserRoute>
                     }
                   />

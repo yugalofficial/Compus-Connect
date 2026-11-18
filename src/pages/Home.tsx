@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import React, { useEffect, useState, useMemo } from 'react';
+import { doc, updateDoc, arrayUnion, arrayRemove, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Event, Society } from '../types';
+import { Event, Society, IssuedCertificate, SocietyApplication } from '../types';
 import EventCard from '../components/EventCard';
-import { Search, Sparkles, Calendar, Award, Users, QrCode, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Search, Sparkles, Calendar, Award, Users, QrCode, TrendingUp, CheckCircle2, Download, Clock, Utensils, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -11,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getEventRecommendations } from '../services/aiService';
 import { format } from 'date-fns';
 import { getEventCover, getInitials } from '../lib/media';
+import { downloadCertificatePdf } from '../lib/certificatePdf';
 
 export default function Home() {
   const { user } = useAuth();
@@ -29,10 +30,44 @@ export default function Home() {
   const [followedIds, setFollowedIds] = useState<string[]>(user?.followedSocieties || []);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [certificates, setCertificates] = useState<IssuedCertificate[]>([]);
+  const [societyApps, setSocietyApps] = useState<SocietyApplication[]>([]);
 
   useEffect(() => {
     setFollowedIds(user?.followedSocieties || []);
   }, [user?.followedSocieties]);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsubCerts = onSnapshot(
+      query(collection(db, 'certificates'), where('userId', '==', user.uid)),
+      (snap) => {
+        const list = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<IssuedCertificate, 'id'>),
+        }));
+        list.sort((a, b) => new Date(b.issuedAt || 0).getTime() - new Date(a.issuedAt || 0).getTime());
+        setCertificates(list);
+      },
+      () => {}
+    );
+    const unsubApps = onSnapshot(
+      query(collection(db, 'society_applications'), where('userId', '==', user.uid)),
+      (snap) => {
+        setSocietyApps(
+          snap.docs.map((d) => ({
+            id: d.id,
+            ...(d.data() as Omit<SocietyApplication, 'id'>),
+          }))
+        );
+      },
+      () => {}
+    );
+    return () => {
+      unsubCerts();
+      unsubApps();
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     let active = true;
@@ -54,6 +89,59 @@ export default function Home() {
     ...reg,
     event: events.find((e) => e.id === reg.eventId),
   }));
+
+  const activityTimeline = useMemo(() => {
+    const items: { id: string; label: string; detail: string; time: string; kind: 'reg' | 'att' | 'meal' | 'cert' | 'soc' }[] = [];
+    myRegistrations.forEach((reg) => {
+      const evTitle = reg.event?.title || 'Campus Event';
+      items.push({
+        id: `reg_${reg.id}`,
+        label: reg.status === 'waitlisted' ? `Waitlisted for ${evTitle}` : `Registered for ${evTitle}`,
+        detail: `Status: ${reg.status}`,
+        time: reg.createdAt || reg.event?.date || '',
+        kind: 'reg',
+      });
+      if (reg.attended && reg.scannedAt) {
+        items.push({
+          id: `att_${reg.id}`,
+          label: `Checked in at ${evTitle}`,
+          detail: 'Attendance QR Verified',
+          time: reg.scannedAt,
+          kind: 'att',
+        });
+      }
+      if (reg.couponRedeemed && reg.couponRedeemedAt) {
+        items.push({
+          id: `meal_${reg.id}`,
+          label: `Meal coupon redeemed (${evTitle})`,
+          detail: 'Canteen Partner Verified',
+          time: reg.couponRedeemedAt,
+          kind: 'meal',
+        });
+      }
+    });
+    certificates.forEach((c) => {
+      items.push({
+        id: `cert_${c.certificateId}`,
+        label: `Certificate issued: ${c.eventTitle}`,
+        detail: `${c.templateCategory} · ${c.certificateId}`,
+        time: c.issuedAt,
+        kind: 'cert',
+      });
+    });
+    societyApps.forEach((a) => {
+      items.push({
+        id: `app_${a.id}`,
+        label: `Applied to ${a.societyName}`,
+        detail: `${a.roleInterest} · ${a.status}`,
+        time: a.reviewedAt || a.createdAt,
+        kind: 'soc',
+      });
+    });
+    return items
+      .sort((a, b) => new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime())
+      .slice(0, 6);
+  }, [myRegistrations, certificates, societyApps]);
 
   const handleToggleFollow = async (soc: Society) => {
     if (!user) return;
@@ -189,6 +277,65 @@ export default function Home() {
         </section>
       )}
 
+      {/* My Digital Certificates Preview */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+            <Award size={20} className="text-primary shrink-0" /> My Certificates
+          </h2>
+          <Link to="/certificates" className="text-xs font-semibold text-primary hover:underline">
+            View All ({certificates.length})
+          </Link>
+        </div>
+
+        {certificates.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {certificates.slice(0, 3).map((cert) => (
+              <div key={cert.certificateId} className="glass rounded-2xl p-4 flex flex-col justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-primary uppercase truncate">
+                    {cert.templateCategory}
+                  </p>
+                  <h4 className="font-bold text-sm truncate mt-0.5">{cert.eventTitle}</h4>
+                  <p className="text-xs font-mono text-secondary mt-1 truncate">{cert.certificateId}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={cert.status === 'revoked'}
+                    onClick={() => downloadCertificatePdf(cert)}
+                    className="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:opacity-90 disabled:opacity-50"
+                  >
+                    <Download size={13} /> PDF
+                  </button>
+                  <Link
+                    to={`/verify-certificate/${cert.certificateId}`}
+                    className="py-2 px-3 rounded-xl border border-border-subtle text-xs font-semibold hover:bg-secondary/10"
+                  >
+                    Verify
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-dashed">
+            <div className="min-w-0">
+              <p className="font-semibold text-sm">Earn verified digital certificates</p>
+              <p className="text-xs text-secondary">
+                Check in at events with your Attendance QR to unlock verifiable PDF credentials.
+              </p>
+            </div>
+            <Link
+              to="/certificates"
+              className="px-4 py-2 rounded-xl border border-border-subtle text-xs font-semibold hover:bg-secondary/10 shrink-0 self-start sm:self-auto"
+            >
+              Open Certificates Hub
+            </Link>
+          </div>
+        )}
+      </section>
+
       {/* Search & Category Tabs */}
       <section className="space-y-5">
         <div className="flex flex-col md:flex-row gap-3">
@@ -308,6 +455,43 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Central Student Activity Timeline */}
+      {activityTimeline.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+            <Clock size={18} className="text-primary" /> Recent Campus Activity
+          </h2>
+          <div className="glass rounded-2xl divide-y divide-border-subtle">
+            {activityTimeline.map((item) => (
+              <div key={item.id} className="p-4 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    {item.kind === 'cert' ? (
+                      <Award size={16} />
+                    ) : item.kind === 'meal' ? (
+                      <Utensils size={16} />
+                    ) : item.kind === 'soc' ? (
+                      <Building2 size={16} />
+                    ) : (
+                      <CheckCircle2 size={16} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{item.label}</p>
+                    <p className="text-xs text-secondary truncate capitalize">{item.detail}</p>
+                  </div>
+                </div>
+                {item.time && (
+                  <span className="text-[11px] text-secondary tabular-nums shrink-0">
+                    {item.time.slice(0, 10)}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       )}

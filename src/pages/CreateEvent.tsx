@@ -3,7 +3,7 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'fir
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   Calendar,
@@ -15,14 +15,19 @@ import {
   Camera,
   QrCode,
   Link2,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { compressImageToDataUrl, getEventCover } from '../lib/media';
 import { syncToSheetsAndDrive } from '../lib/api';
+import { EventScheduleItem, EventSpeaker } from '../types';
 
 export default function CreateEvent() {
   const { user, platformSettings } = useAuth();
   const { showToast } = useToast();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const duplicateFrom = searchParams.get('duplicateFrom');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -31,12 +36,16 @@ export default function CreateEvent() {
     slug: '',
     description: '',
     date: '',
+    registrationDeadline: '',
     venue: '',
+    mapUrl: '',
+    requirements: '',
     category: 'Tech',
     type: 'free' as 'free' | 'paid',
     fee: 0,
     upiId: user?.upiId || platformSettings.platformUpiId || '',
     registrationLimit: 100,
+    allowWaitlist: true,
     hasFoodCoupon: false,
     couponCost: 50,
     maxCoupons: 100,
@@ -44,32 +53,48 @@ export default function CreateEvent() {
     qrScanStart: '',
     qrScanEnd: '',
   });
+  const [schedule, setSchedule] = useState<EventScheduleItem[]>([]);
+  const [speakers, setSpeakers] = useState<EventSpeaker[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!id) return;
+    const sourceId = id || duplicateFrom;
+    if (!sourceId) return;
+    const isDuplicate = !id && Boolean(duplicateFrom);
     const fetchEvent = async () => {
       try {
-        const eventDoc = await getDoc(doc(db, 'events', id));
+        const eventDoc = await getDoc(doc(db, 'events', sourceId));
         if (eventDoc.exists()) {
           const data = eventDoc.data() as any;
+          const baseTitle = isDuplicate ? `${data.title || 'Event'} (Copy)` : data.title || '';
+          const baseSlug = isDuplicate
+            ? `${data.slug || 'event'}-copy-${Date.now().toString().slice(-4)}`
+            : data.slug || '';
           setFormData({
-            title: data.title || '',
-            slug: data.slug || '',
+            title: baseTitle,
+            slug: baseSlug,
             description: data.description || '',
-            date: data.date || '',
+            date: isDuplicate ? '' : data.date || '',
+            registrationDeadline: isDuplicate ? '' : data.registrationDeadline || '',
             venue: data.venue || '',
+            mapUrl: data.mapUrl || '',
+            requirements: data.requirements || '',
             category: data.category || 'Tech',
             type: data.type || 'free',
             fee: data.fee || 0,
             upiId: data.upiId || user?.upiId || '',
             registrationLimit: data.registrationLimit || 100,
+            allowWaitlist: data.allowWaitlist !== undefined ? Boolean(data.allowWaitlist) : true,
             hasFoodCoupon: Boolean(data.hasFoodCoupon),
             couponCost: data.couponCost || 50,
             maxCoupons: data.maxCoupons || data.registrationLimit || 100,
             posterUrl: data.posterUrl || '',
-            qrScanStart: data.qrScanStart || '',
-            qrScanEnd: data.qrScanEnd || '',
+            qrScanStart: isDuplicate ? '' : data.qrScanStart || '',
+            qrScanEnd: isDuplicate ? '' : data.qrScanEnd || '',
           });
+          setSchedule(Array.isArray(data.schedule) ? data.schedule : []);
+          setSpeakers(Array.isArray(data.speakers) ? data.speakers : []);
+          setGalleryUrls(Array.isArray(data.galleryUrls) ? data.galleryUrls : []);
         }
       } catch (err) {
         console.error('Fetch event error:', err);
@@ -77,7 +102,7 @@ export default function CreateEvent() {
       }
     };
     fetchEvent();
-  }, [id]);
+  }, [id, duplicateFrom]);
 
   const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,6 +131,8 @@ export default function CreateEvent() {
 
     setLoading(true);
     try {
+      const cleanSchedule = schedule.filter((s) => s.title.trim() || s.time.trim());
+      const cleanSpeakers = speakers.filter((s) => s.name.trim());
       const payload = {
         ...formData,
         title: formData.title.trim(),
@@ -122,6 +149,9 @@ export default function CreateEvent() {
         maxCoupons: formData.hasFoodCoupon
           ? Number(formData.maxCoupons) || Number(formData.registrationLimit) || 100
           : 0,
+        schedule: cleanSchedule,
+        speakers: cleanSpeakers,
+        galleryUrls,
       };
 
       if (id) {
@@ -135,8 +165,10 @@ export default function CreateEvent() {
         const eventData = {
           ...payload,
           organizerId: user.uid,
+          organizerName: user.name || 'Campus Organiser',
           societyId: user.societyId || '',
           registeredCount: 0,
+          waitlistCount: 0,
           status: 'upcoming' as const,
           qrVisible: true,
           createdAt: serverTimestamp(),
@@ -490,6 +522,216 @@ export default function CreateEvent() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* V3 Advanced Event Details: Deadline, Waitlist, Schedule, Speakers, Gallery */}
+        <div className="glass p-5 sm:p-6 rounded-3xl border border-border-subtle space-y-5">
+          <div>
+            <h2 className="text-base font-bold">Agenda, Waitlist & Campus Details</h2>
+            <p className="text-xs text-secondary">Optional structured schedule, speakers, deadlines, and venue links</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-secondary font-semibold mb-1 block">
+                Registration Deadline
+              </label>
+              <input
+                type="datetime-local"
+                className="w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs font-semibold"
+                value={formData.registrationDeadline}
+                onChange={(e) =>
+                  setFormData({ ...formData, registrationDeadline: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary font-semibold mb-1 block">
+                Google Maps / Venue Link
+              </label>
+              <input
+                type="url"
+                placeholder="https://maps.google.com/..."
+                className="w-full bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-xs"
+                value={formData.mapUrl}
+                onChange={(e) => setFormData({ ...formData, mapUrl: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <label className="flex items-center justify-between pt-2 text-xs font-semibold">
+            <span>Enable Automatic Waitlist when Registration Limit is Reached</span>
+            <input
+              type="checkbox"
+              checked={formData.allowWaitlist}
+              onChange={(e) => setFormData({ ...formData, allowWaitlist: e.target.checked })}
+              className="w-4 h-4 accent-primary"
+            />
+          </label>
+
+          <div>
+            <label className="text-xs text-secondary font-semibold mb-1 block">
+              Participation Requirements & Eligibility Notes
+            </label>
+            <textarea
+              rows={2}
+              placeholder="e.g. Bring college ID card and laptop with Node.js installed"
+              className="w-full bg-background/50 border border-border-subtle rounded-xl p-3 text-xs"
+              value={formData.requirements}
+              onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+            />
+          </div>
+
+          {/* Schedule Builder */}
+          <div className="space-y-2.5 pt-2 border-t border-border-subtle">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Event Schedule ({schedule.length})</span>
+              <button
+                type="button"
+                onClick={() => setSchedule((s) => [...s, { time: '', title: '', speaker: '' }])}
+                className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+              >
+                <Plus size={13} /> Add Slot
+              </button>
+            </div>
+            {schedule.map((slot, idx) => (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="10:00 AM"
+                  value={slot.time}
+                  onChange={(e) => {
+                    const copy = [...schedule];
+                    copy[idx] = { ...copy[idx], time: e.target.value };
+                    setSchedule(copy);
+                  }}
+                  className="sm:col-span-3 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Session title"
+                  value={slot.title}
+                  onChange={(e) => {
+                    const copy = [...schedule];
+                    copy[idx] = { ...copy[idx], title: e.target.value };
+                    setSchedule(copy);
+                  }}
+                  className="sm:col-span-5 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Speaker (optional)"
+                  value={slot.speaker || ''}
+                  onChange={(e) => {
+                    const copy = [...schedule];
+                    copy[idx] = { ...copy[idx], speaker: e.target.value };
+                    setSchedule(copy);
+                  }}
+                  className="sm:col-span-3 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSchedule((s) => s.filter((_, i) => i !== idx))}
+                  className="sm:col-span-1 h-9 flex items-center justify-center text-red-500 hover:bg-red-500/10 rounded-lg"
+                  aria-label="Remove schedule slot"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Speakers Builder */}
+          <div className="space-y-2.5 pt-2 border-t border-border-subtle">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Speakers & Guests ({speakers.length})</span>
+              <button
+                type="button"
+                onClick={() => setSpeakers((s) => [...s, { name: '', role: '' }])}
+                className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+              >
+                <Plus size={13} /> Add Speaker
+              </button>
+            </div>
+            {speakers.map((sp, idx) => (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Speaker name"
+                  value={sp.name}
+                  onChange={(e) => {
+                    const copy = [...speakers];
+                    copy[idx] = { ...copy[idx], name: e.target.value };
+                    setSpeakers(copy);
+                  }}
+                  className="sm:col-span-5 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Role / Affiliation"
+                  value={sp.role}
+                  onChange={(e) => {
+                    const copy = [...speakers];
+                    copy[idx] = { ...copy[idx], role: e.target.value };
+                    setSpeakers(copy);
+                  }}
+                  className="sm:col-span-6 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSpeakers((s) => s.filter((_, i) => i !== idx))}
+                  className="sm:col-span-1 h-9 flex items-center justify-center text-red-500 hover:bg-red-500/10 rounded-lg"
+                  aria-label="Remove speaker"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Gallery Upload (max 4 photos) */}
+          <div className="space-y-2.5 pt-2 border-t border-border-subtle">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Event Gallery ({galleryUrls.length}/4)</span>
+              {galleryUrls.length < 4 && (
+                <label className="text-xs font-semibold text-primary cursor-pointer hover:underline">
+                  + Upload Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const url = await compressImageToDataUrl(file, 720, 0.72);
+                        setGalleryUrls((g) => [...g.slice(0, 3), url]);
+                      } catch {
+                        showToast('Failed to compress gallery photo.', 'error');
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            {galleryUrls.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {galleryUrls.map((url, idx) => (
+                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-border-subtle">
+                    <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setGalleryUrls((g) => g.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 text-white flex items-center justify-center text-xs"
+                      aria-label="Remove gallery photo"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

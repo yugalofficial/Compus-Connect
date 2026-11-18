@@ -47,13 +47,16 @@ export default defineConfig(({mode}) => {
           'pwa-192x192.png',
           'pwa-512x512.png',
           'pwa-maskable-512x512.png',
+          'og-campus-connect.jpg',
+          'robots.txt',
+          'sitemap.xml',
         ],
         manifest: {
           id: base,
-          name: 'Campus Connect V2',
+          name: 'Campus Connect',
           short_name: 'CampusApp',
           description:
-            'A professional event management and participation platform for college campuses with QR attendance and canteen meal coupons.',
+            'University event management, QR attendance, digital certificates, society management, and canteen meal operations.',
           theme_color: '#2563eb',
           background_color: '#090d16',
           display: 'standalone',
@@ -83,7 +86,7 @@ export default defineConfig(({mode}) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
           navigateFallback: `${base}index.html`,
           navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
@@ -145,6 +148,18 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+      },
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+            'vendor-charts': ['recharts'],
+            'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+            'vendor-qr': ['qrcode.react', 'html5-qrcode'],
+          },
+        },
       },
     },
     server: {

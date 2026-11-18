@@ -25,6 +25,9 @@ import {
   X,
   CheckCircle2,
   Clock,
+  Award,
+  BarChart3,
+  Copy,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -118,10 +121,13 @@ export default function Dashboard() {
 
   const COLORS = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6'];
 
-  const totalRevenue = organizedEvents.reduce(
-    (acc, e) => acc + (e.fee || 0) * (e.registeredCount || 0),
-    0
-  );
+  const totalRevenue = organizedEvents.reduce((acc, e) => {
+    if (e.type !== 'paid' || !e.fee) return acc;
+    const confirmedCount = registrations.filter(
+      (r) => r.eventId === e.id && r.status === 'confirmed'
+    ).length;
+    return acc + e.fee * confirmedCount;
+  }, 0);
   const totalRegistrations = organizedEvents.reduce(
     (acc, e) => acc + (e.registeredCount || 0),
     0
@@ -184,6 +190,22 @@ export default function Dashboard() {
               Create Society
             </Link>
           )}
+
+          <Link
+            to="/analytics"
+            className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
+          >
+            <BarChart3 size={16} className="text-primary shrink-0" />
+            Analytics
+          </Link>
+
+          <Link
+            to="/certificates/studio"
+            className="px-4 py-2.5 rounded-xl border border-border-subtle glass text-xs sm:text-sm font-semibold flex items-center gap-2 hover:border-primary/40 transition-colors"
+          >
+            <Award size={16} className="text-primary shrink-0" />
+            Certificates
+          </Link>
 
           <Link
             to="/create"
@@ -406,11 +428,11 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <section>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <Link to="/create" className="block group">
             <div className="glass p-6 rounded-3xl border border-primary/20 flex items-center justify-between hover:border-primary/50 transition-all h-full">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
                   <Plus size={24} />
                 </div>
                 <div>
@@ -418,24 +440,24 @@ export default function Dashboard() {
                   <p className="text-xs text-secondary">Launch a new campus event</p>
                 </div>
               </div>
-              <ArrowRight size={20} className="text-secondary group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              <ArrowRight size={20} className="text-secondary group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           </Link>
 
           <Link to={user?.societyId ? `/society/${user.societyId}` : '/create-society'} className="block group">
             <div className="glass p-6 rounded-3xl border border-accent/20 flex items-center justify-between hover:border-accent/50 transition-all h-full">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
+                <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent shrink-0">
                   <Building2 size={24} />
                 </div>
                 <div>
                   <h4 className="text-base font-bold">
                     {user?.societyId ? 'Society Profile' : 'Setup Society'}
                   </h4>
-                  <p className="text-xs text-secondary">Manage club branding & socials</p>
+                  <p className="text-xs text-secondary">Manage club, team & recruitment</p>
                 </div>
               </div>
-              <ArrowRight size={20} className="text-secondary group-hover:text-accent group-hover:translate-x-1 transition-all" />
+              <ArrowRight size={20} className="text-secondary group-hover:text-accent group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           </Link>
 
@@ -446,7 +468,7 @@ export default function Dashboard() {
           >
             <div className="glass p-6 rounded-3xl border border-emerald-500/20 flex items-center justify-between hover:border-emerald-500/50 transition-all h-full">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shrink-0">
                   <QrCode size={24} />
                 </div>
                 <div>
@@ -454,9 +476,24 @@ export default function Dashboard() {
                   <p className="text-xs text-secondary">Select an event & scan tickets</p>
                 </div>
               </div>
-              <ArrowRight size={20} className="text-secondary group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+              <ArrowRight size={20} className="text-secondary group-hover:text-emerald-500 group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           </button>
+
+          <Link to="/certificates/studio" className="block group">
+            <div className="glass p-6 rounded-3xl border border-amber-500/20 flex items-center justify-between hover:border-amber-500/50 transition-all h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 shrink-0">
+                  <Award size={24} />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold">Certificate Studio</h4>
+                  <p className="text-xs text-secondary">Design & issue verified credentials</p>
+                </div>
+              </div>
+              <ArrowRight size={20} className="text-secondary group-hover:text-amber-500 group-hover:translate-x-1 transition-all shrink-0" />
+            </div>
+          </Link>
         </div>
       </section>
 
@@ -521,7 +558,23 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center justify-end gap-2 flex-wrap">
+                      <Link
+                        to={`/create?duplicateFrom=${event.id}`}
+                        className="px-3 py-2 glass border border-border-subtle hover:border-primary/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        title="Duplicate event"
+                      >
+                        <Copy size={13} />
+                        Duplicate
+                      </Link>
+                      <Link
+                        to={`/manage/${event.id}/certificates`}
+                        className="px-3 py-2 glass border border-border-subtle hover:border-primary/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        title="Issue Certificates"
+                      >
+                        <Award size={13} />
+                        Certificates
+                      </Link>
                       <Link
                         to={`/manage/${event.id}`}
                         className="px-3.5 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"

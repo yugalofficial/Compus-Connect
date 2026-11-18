@@ -13,8 +13,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Notification } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, Calendar, Info, CheckCircle2, ArrowLeft, Trash2, CheckCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Bell, Calendar, Info, CheckCircle2, ArrowLeft, Trash2, CheckCheck, Award } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
 function getNotifTimestamp(createdAt: any): number {
@@ -39,7 +39,7 @@ export default function Notifications() {
   const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'certificate' | 'event_update'>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -108,6 +108,8 @@ export default function Notifications() {
         return <Calendar className="text-primary" size={18} />;
       case 'registration_success':
         return <CheckCircle2 className="text-emerald-500" size={18} />;
+      case 'certificate':
+        return <Award className="text-amber-500" size={18} />;
       default:
         return <Info className="text-accent" size={18} />;
     }
@@ -115,7 +117,11 @@ export default function Notifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const visibleNotifications =
-    filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
+    filter === 'unread'
+      ? notifications.filter((n) => !n.read)
+      : filter === 'all'
+        ? notifications
+        : notifications.filter((n) => n.type === filter);
 
   return (
     <motion.div
@@ -162,20 +168,32 @@ export default function Notifications() {
         </div>
       </header>
 
-      <div className="flex gap-2">
-        {(['all', 'unread'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold capitalize ${
-              filter === tab
-                ? 'bg-primary text-white'
-                : 'glass border border-border-subtle text-secondary'
-            }`}
-          >
-            {tab === 'unread' ? `Unread (${unreadCount})` : 'All'}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              { id: 'all', label: 'All' },
+              { id: 'unread', label: `Unread (${unreadCount})` },
+              { id: 'certificate', label: 'Certificates' },
+              { id: 'event_update', label: 'Event Updates' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilter(tab.id)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold ${
+                filter === tab.id
+                  ? 'bg-primary text-white'
+                  : 'glass border border-border-subtle text-secondary'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <Link to="/profile" className="text-xs font-semibold text-primary hover:underline">
+          Preferences
+        </Link>
       </div>
 
       {loading ? (

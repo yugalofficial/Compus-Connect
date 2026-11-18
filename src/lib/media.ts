@@ -1,11 +1,19 @@
-export const HERO_BANNER_IMAGE = '/src/assets/images/campus_hero_banner_1794679146693.jpg';
+import campusHeroImg from '../assets/images/campus_hero_banner_1794679146693.jpg';
+import ogCampusImg from '../assets/images/og_campus_connect_v3_1794967363609.jpg';
+import techCoverImg from '../assets/images/event_tech_default_1794679147074.jpg';
+import culturalCoverImg from '../assets/images/event_cultural_default_1794679147344.jpg';
+import workshopCoverImg from '../assets/images/event_workshop_default_1794679147359.jpg';
+import sportsCoverImg from '../assets/images/event_sports_default_1794679146814.jpg';
+
+export const HERO_BANNER_IMAGE = ogCampusImg || campusHeroImg;
+export const CAMPUS_PLAZA_IMAGE = campusHeroImg;
 
 export const CATEGORY_COVERS: Record<string, string> = {
-  Tech: '/src/assets/images/event_tech_default_1794679147074.jpg',
-  Cultural: '/src/assets/images/event_cultural_default_1794679147344.jpg',
-  Workshop: '/src/assets/images/event_workshop_default_1794679147359.jpg',
-  Sports: '/src/assets/images/event_sports_default_1794679146814.jpg',
-  Academic: '/src/assets/images/campus_hero_banner_1794679146693.jpg',
+  Tech: techCoverImg,
+  Cultural: culturalCoverImg,
+  Workshop: workshopCoverImg,
+  Sports: sportsCoverImg,
+  Academic: campusHeroImg,
 };
 
 export function getEventCover(posterUrl?: string, category?: string): string {

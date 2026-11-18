@@ -34,6 +34,12 @@ export default function Profile() {
   const [attendedEvents, setAttendedEvents] = useState<Event[]>([]);
   const [totalRegistered, setTotalRegistered] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [notifPrefs, setNotifPrefs] = useState({
+    eventReminders: true,
+    paymentUpdates: true,
+    certificates: true,
+    societyAnnouncements: true,
+  });
 
   // Edit profile modal state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -63,6 +69,14 @@ export default function Profile() {
       photoURL: user.photoURL || '',
       interests: user.interests || [],
     });
+    if (user.notificationPreferences) {
+      setNotifPrefs({
+        eventReminders: user.notificationPreferences.eventReminders ?? true,
+        paymentUpdates: user.notificationPreferences.paymentUpdates ?? true,
+        certificates: user.notificationPreferences.certificates ?? true,
+        societyAnnouncements: user.notificationPreferences.societyAnnouncements ?? true,
+      });
+    }
 
     const fetchAttended = async () => {
       try {
@@ -269,7 +283,22 @@ export default function Profile() {
           </section>
 
           <section className="mb-8">
-            <h3 className="text-lg font-bold mb-4">Attended Events</h3>
+            <h3 className="text-lg font-bold mb-4">Credentials & Attended Events</h3>
+            <Link
+              to="/certificates"
+              className="glass p-4 rounded-2xl border border-primary/25 flex items-center justify-between hover:border-primary/50 transition-colors mb-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Award size={18} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">My Digital Certificates</h4>
+                  <p className="text-xs text-secondary">Download official PDFs and share QR verification links</p>
+                </div>
+              </div>
+              <ChevronRight size={18} className="text-secondary" />
+            </Link>
             {loading ? (
               <div className="glass h-20 rounded-2xl animate-pulse" />
             ) : attendedEvents.length > 0 ? (
@@ -362,6 +391,46 @@ export default function Profile() {
           </Link>
         </section>
       )}
+
+      <section className="mb-8 glass rounded-3xl p-5 border border-border-subtle space-y-3">
+        <div className="flex items-center gap-2">
+          <Bell size={16} className="text-primary" />
+          <h3 className="text-sm font-bold">Notification Preferences</h3>
+        </div>
+        {(
+          [
+            { key: 'eventReminders', label: 'Event schedules, broadcasts & seat promotions' },
+            { key: 'paymentUpdates', label: 'Payment confirmations & canteen payout updates' },
+            { key: 'certificates', label: 'Digital certificate issuance alerts' },
+            { key: 'societyAnnouncements', label: 'Campus society announcements & applications' },
+          ] as const
+        ).map((pref) => (
+          <label
+            key={pref.key}
+            className="flex items-center justify-between gap-3 py-1.5 text-xs sm:text-sm cursor-pointer"
+          >
+            <span className="text-secondary">{pref.label}</span>
+            <input
+              type="checkbox"
+              checked={notifPrefs[pref.key]}
+              onChange={async (e) => {
+                const updated = { ...notifPrefs, [pref.key]: e.target.checked };
+                setNotifPrefs(updated);
+                try {
+                  await updateDoc(doc(db, 'users', user.uid), {
+                    notificationPreferences: updated,
+                    updatedAt: new Date().toISOString(),
+                  });
+                  showToast('Notification preference updated.', 'success');
+                } catch {
+                  showToast('Could not save preference.', 'error');
+                }
+              }}
+              className="w-4 h-4 accent-primary shrink-0"
+            />
+          </label>
+        ))}
+      </section>
 
       <section className="mb-6">
         <PWAInstallButton variant="card" />

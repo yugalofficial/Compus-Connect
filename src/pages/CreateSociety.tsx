@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, CheckCircle2, Camera, Globe, Instagram, Twitter } from 'lucide-react';
-import { Society } from '../types';
+import { ArrowLeft, CheckCircle2, Camera, Globe, Instagram, Twitter, Plus, Trash2 } from 'lucide-react';
+import { Society, SocietyCoreMember } from '../types';
 import { compressImageToDataUrl, HERO_BANNER_IMAGE, getInitials } from '../lib/media';
 
 export default function CreateSociety() {
@@ -21,12 +21,19 @@ export default function CreateSociety() {
     category: 'Tech',
     logoUrl: '',
     bannerUrl: '',
+    facultyCoordinator: {
+      name: '',
+      department: '',
+      email: '',
+    },
     socials: {
       website: '',
       instagram: '',
       twitter: '',
     },
   });
+  const [coreTeam, setCoreTeam] = useState<SocietyCoreMember[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -41,12 +48,19 @@ export default function CreateSociety() {
             category: data.category || 'Tech',
             logoUrl: data.logoUrl || '',
             bannerUrl: data.bannerUrl || '',
+            facultyCoordinator: {
+              name: data.facultyCoordinator?.name || '',
+              department: data.facultyCoordinator?.department || '',
+              email: data.facultyCoordinator?.email || '',
+            },
             socials: {
               website: data.socials?.website || '',
               instagram: data.socials?.instagram || '',
               twitter: data.socials?.twitter || '',
             },
           });
+          setCoreTeam(Array.isArray(data.coreTeam) ? data.coreTeam : []);
+          setGalleryUrls(Array.isArray(data.galleryUrls) ? data.galleryUrls : []);
         }
       } catch (err) {
         console.error('Fetch society error:', err);
@@ -86,18 +100,25 @@ export default function CreateSociety() {
 
     setLoading(true);
     try {
+      const cleanTeam = coreTeam.filter((m) => m.name.trim());
+      const payload = {
+        ...formData,
+        coreTeam: cleanTeam,
+        galleryUrls,
+      };
       if (id) {
         await updateDoc(doc(db, 'societies', id), {
-          ...formData,
+          ...payload,
           updatedAt: serverTimestamp(),
         });
         showToast('Society updated!', 'success');
         navigate(`/society/${id}`);
       } else {
         const societyData = {
-          ...formData,
+          ...payload,
           organizerId: user.uid,
           followerCount: 0,
+          approvalStatus: 'approved' as const,
           createdAt: serverTimestamp(),
         };
 
@@ -279,6 +300,144 @@ export default function CreateSociety() {
                 }
               />
             </div>
+          </div>
+        </div>
+
+        {/* Faculty Coordinator & Core Team */}
+        <div className="glass p-6 rounded-3xl border border-border-subtle space-y-5">
+          <div>
+            <h3 className="text-sm font-bold">Faculty Coordinator & Leadership</h3>
+            <p className="text-xs text-secondary">Displayed on your public society directory profile</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input
+              type="text"
+              placeholder="Faculty Coordinator Name"
+              className="bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-sm"
+              value={formData.facultyCoordinator.name}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  facultyCoordinator: { ...formData.facultyCoordinator, name: e.target.value },
+                })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Department"
+              className="bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-sm"
+              value={formData.facultyCoordinator.department}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  facultyCoordinator: {
+                    ...formData.facultyCoordinator,
+                    department: e.target.value,
+                  },
+                })
+              }
+            />
+            <input
+              type="email"
+              placeholder="Coordinator Email"
+              className="bg-background/50 border border-border-subtle rounded-xl py-2.5 px-3 text-sm"
+              value={formData.facultyCoordinator.email}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  facultyCoordinator: { ...formData.facultyCoordinator, email: e.target.value },
+                })
+              }
+            />
+          </div>
+
+          <div className="space-y-2.5 pt-2 border-t border-border-subtle">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Core Team Members ({coreTeam.length})</span>
+              <button
+                type="button"
+                onClick={() => setCoreTeam((t) => [...t, { name: '', role: '' }])}
+                className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+              >
+                <Plus size={13} /> Add Member
+              </button>
+            </div>
+            {coreTeam.map((member, idx) => (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Student Lead Name"
+                  value={member.name}
+                  onChange={(e) => {
+                    const copy = [...coreTeam];
+                    copy[idx] = { ...copy[idx], name: e.target.value };
+                    setCoreTeam(copy);
+                  }}
+                  className="sm:col-span-5 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Role (e.g. President, Technical Lead)"
+                  value={member.role}
+                  onChange={(e) => {
+                    const copy = [...coreTeam];
+                    copy[idx] = { ...copy[idx], role: e.target.value };
+                    setCoreTeam(copy);
+                  }}
+                  className="sm:col-span-6 h-9 px-2.5 rounded-lg bg-background/60 border border-border-subtle text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCoreTeam((t) => t.filter((_, i) => i !== idx))}
+                  className="sm:col-span-1 h-9 flex items-center justify-center text-red-500 hover:bg-red-500/10 rounded-lg"
+                  aria-label="Remove member"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2.5 pt-2 border-t border-border-subtle">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Highlight Gallery ({galleryUrls.length}/4)</span>
+              {galleryUrls.length < 4 && (
+                <label className="text-xs font-semibold text-primary cursor-pointer hover:underline">
+                  + Upload Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const url = await compressImageToDataUrl(file, 720, 0.72);
+                        setGalleryUrls((g) => [...g.slice(0, 3), url]);
+                      } catch {
+                        showToast('Failed to compress photo.', 'error');
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            {galleryUrls.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {galleryUrls.map((url, idx) => (
+                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-border-subtle">
+                    <img src={url} alt={`Society gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setGalleryUrls((g) => g.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 text-white flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

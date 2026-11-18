@@ -34,6 +34,9 @@ import {
   Upload,
   Image as ImageIcon,
   X,
+  Award,
+  Copy,
+  Megaphone,
 } from 'lucide-react';
 import QRScanner from '../components/QRScanner';
 import jsPDF from 'jspdf';
@@ -57,7 +60,7 @@ export default function ManageEvent() {
   const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState<'attendance' | 'coupon' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'waitlisted'>('all');
 
   // Modals
   const [previewImage, setPreviewImage] = useState<{ title: string; src: string } | null>(null);
@@ -65,6 +68,11 @@ export default function ManageEvent() {
   const [upiTxnId, setUpiTxnId] = useState('');
   const [proofDataUrl, setProofDataUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [broadcastModal, setBroadcastModal] = useState(false);
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [cancelOnBroadcast, setCancelOnBroadcast] = useState(false);
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   // Debounce & concurrency guard for QR scanning
   const isProcessingScanRef = useRef(false);
@@ -223,6 +231,90 @@ export default function ManageEvent() {
     } catch (err) {
       console.error('Reject error:', err);
       showToast('Failed to reject registration.', 'error');
+    }
+  };
+
+  const promoteWaitlisted = async (reg: EnrichedRegistration) => {
+    if (!event) return;
+    try {
+      const ticketId = `TKT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      const validationToken =
+        reg.validationToken || Math.random().toString(36).substring(2, 15);
+      const qrCode = `attendance:${event.id}:${reg.userId}:${validationToken}`;
+
+      await updateDoc(doc(db, 'registrations', reg.id), {
+        status: 'confirmed',
+        ticketId,
+        qrCode,
+        validationToken,
+      });
+
+      await updateDoc(doc(db, 'events', event.id), {
+        registeredCount: increment(1),
+        waitlistCount: Math.max(0, (event.waitlistCount || 1) - 1),
+      });
+
+      await addDoc(collection(db, 'notifications'), {
+        userId: reg.userId,
+        title: 'Waitlist Seat Confirmed!',
+        message: `Great news! A seat opened up for "${event.title}". Your QR ticket is now active.`,
+        type: 'registration_success',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
+      showToast('Student promoted from waitlist to confirmed!', 'success');
+    } catch (err) {
+      console.error('Promote waitlist error:', err);
+      showToast('Failed to promote waitlisted attendee.', 'error');
+    }
+  };
+
+  const handleBroadcastUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event || !broadcastMsg.trim()) return;
+    setSendingBroadcast(true);
+    try {
+      if (cancelOnBroadcast) {
+        await updateDoc(doc(db, 'events', event.id), {
+          isCancelled: true,
+          cancellationReason: broadcastMsg.trim(),
+        });
+      }
+
+      const targets = registrations.filter(
+        (r) => r.status === 'confirmed' || r.status === 'waitlisted'
+      );
+      await Promise.all(
+        targets.map((r) =>
+          addDoc(collection(db, 'notifications'), {
+            userId: r.userId,
+            title:
+              broadcastTitle.trim() ||
+              (cancelOnBroadcast ? `Event Cancelled: ${event.title}` : `Update: ${event.title}`),
+            message: broadcastMsg.trim(),
+            type: 'event_update',
+            read: false,
+            createdAt: serverTimestamp(),
+          })
+        )
+      );
+
+      showToast(
+        cancelOnBroadcast
+          ? `Event cancelled and ${targets.length} attendee(s) notified.`
+          : `Announcement sent to ${targets.length} participant(s).`,
+        'success'
+      );
+      setBroadcastModal(false);
+      setBroadcastTitle('');
+      setBroadcastMsg('');
+      setCancelOnBroadcast(false);
+    } catch (err) {
+      console.error('Broadcast error:', err);
+      showToast('Failed to send announcement.', 'error');
+    } finally {
+      setSendingBroadcast(false);
     }
   };
 
@@ -572,13 +664,34 @@ export default function ManageEvent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            onClick={() => navigate(`/manage/${id}/certificates`)}
+            className="px-3.5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-1.5 hover:opacity-90 whitespace-nowrap"
+          >
+            <Award size={14} />
+            Certificates
+          </button>
+          <button
+            onClick={() => navigate(`/create?duplicateFrom=${id}`)}
+            className="px-3 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold flex items-center gap-1.5 hover:border-primary/40 whitespace-nowrap"
+          >
+            <Copy size={14} />
+            Duplicate
+          </button>
+          <button
+            onClick={() => setBroadcastModal(true)}
+            className="px-3 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold flex items-center gap-1.5 hover:border-primary/40 whitespace-nowrap"
+          >
+            <Megaphone size={14} />
+            Notify
+          </button>
           <button
             onClick={exportToPDF}
-            className="px-3.5 sm:px-4 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-2 hover:border-primary/40 whitespace-nowrap"
+            className="px-3.5 py-2.5 glass border border-border-subtle rounded-xl text-xs font-bold text-primary flex items-center gap-2 hover:border-primary/40 whitespace-nowrap"
           >
             <Download size={14} />
-            Export PDF
+            PDF
           </button>
           <button
             onClick={() => navigate(`/edit/${id}`)}
@@ -828,7 +941,7 @@ export default function ManageEvent() {
             Registrations <span className="text-secondary font-medium tabular-nums">({registrations.length})</span>
           </h3>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {(['all', 'pending', 'confirmed'] as const).map((tab) => (
+            {(['all', 'pending', 'confirmed', 'waitlisted'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
@@ -927,6 +1040,18 @@ export default function ManageEvent() {
                           Verify & Issue Ticket
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {reg.status === 'waitlisted' && (
+                    <div className="pt-2 border-t border-border-subtle flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => promoteWaitlisted(reg)}
+                        className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90"
+                      >
+                        Promote to Confirmed Seat
+                      </button>
                     </div>
                   )}
 
@@ -1104,6 +1229,96 @@ export default function ManageEvent() {
                 alt={previewImage.title}
                 className="w-full max-h-[70vh] object-contain rounded-2xl bg-black/20"
               />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Broadcast / Event Cancellation Modal */}
+      <AnimatePresence>
+        {broadcastModal && (
+          <div className="fixed inset-0 z-[1150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setBroadcastModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md glass rounded-3xl p-6 shadow-2xl border border-border-subtle max-h-[90dvh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">Notify Registered Attendees</h3>
+                <button
+                  onClick={() => setBroadcastModal(false)}
+                  className="p-2 rounded-xl hover:bg-secondary/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <form onSubmit={handleBroadcastUpdate} className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-secondary block mb-1">
+                    Alert Title
+                  </label>
+                  <input
+                    type="text"
+                    value={broadcastTitle}
+                    onChange={(e) => setBroadcastTitle(e.target.value)}
+                    placeholder={`Update: ${event.title}`}
+                    className="w-full h-10 px-3 rounded-xl bg-background/60 border border-border-subtle text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-secondary block mb-1">
+                    Message to Attendees
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={broadcastMsg}
+                    onChange={(e) => setBroadcastMsg(e.target.value)}
+                    placeholder="Room change, reporting instructions, or cancellation reason..."
+                    className="w-full p-3 rounded-xl bg-background/60 border border-border-subtle text-sm"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-xs font-semibold text-red-500">
+                  <input
+                    type="checkbox"
+                    checked={cancelOnBroadcast}
+                    onChange={(e) => setCancelOnBroadcast(e.target.checked)}
+                    className="w-4 h-4 accent-red-500"
+                  />
+                  Mark this event as Cancelled and close new registrations
+                </label>
+                <div className="flex gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastModal(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-border-subtle text-sm font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sendingBroadcast}
+                    className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-50 ${
+                      cancelOnBroadcast ? 'bg-red-600' : 'bg-primary'
+                    }`}
+                  >
+                    {sendingBroadcast
+                      ? 'Sending...'
+                      : cancelOnBroadcast
+                        ? 'Cancel & Notify'
+                        : 'Send Broadcast'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

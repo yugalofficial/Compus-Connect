@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Bell, HelpCircle, ChevronDown } from 'lucide-react';
+import { LogOut, User, Bell, HelpCircle, ChevronDown, Award, BarChart3 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -40,15 +40,17 @@ export default function RoleHeader() {
     ? [
         { label: 'Admin Console', path: '/admin' },
         { label: 'Organiser Hub', path: '/dashboard' },
-        { label: 'Canteen Portal', path: '/canteen' },
+        { label: 'Analytics', path: '/analytics' },
+        { label: 'Certificates', path: '/certificates/studio' },
         { label: 'Explore', path: '/explore' },
       ]
     : isOrganizer
       ? [
           { label: 'Dashboard', path: '/dashboard' },
-          { label: 'Create Event', path: '/create' },
+          { label: 'Analytics', path: '/analytics' },
+          { label: 'Certificates', path: '/certificates/studio' },
+          { label: 'Societies', path: '/societies' },
           { label: 'Explore', path: '/explore' },
-          { label: 'Guide', path: '/how-to-use' },
         ]
       : isCanteen
         ? [
@@ -59,8 +61,9 @@ export default function RoleHeader() {
         : [
             { label: 'Home', path: '/home' },
             { label: 'Explore', path: '/explore' },
+            { label: 'Societies', path: '/societies' },
+            { label: 'Certificates', path: '/certificates' },
             { label: 'Calendar', path: '/calendar' },
-            { label: 'Alerts', path: '/notifications' },
           ];
 
   return (
@@ -150,6 +153,22 @@ export default function RoleHeader() {
                     >
                       <User size={16} /> Profile & Settings
                     </Link>
+                    {!isCanteen && (
+                      <Link
+                        to={isOrganizer || isAdmin ? '/certificates/studio' : '/certificates'}
+                        className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary/10 transition-colors"
+                      >
+                        <Award size={16} /> {isOrganizer || isAdmin ? 'Certificate Studio' : 'My Certificates'}
+                      </Link>
+                    )}
+                    {(isOrganizer || isAdmin) && (
+                      <Link
+                        to="/analytics"
+                        className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary/10 transition-colors"
+                      >
+                        <BarChart3 size={16} /> Analytics & Reports
+                      </Link>
+                    )}
                     <Link
                       to="/how-to-use"
                       className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary/10 transition-colors"

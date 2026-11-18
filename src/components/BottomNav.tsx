@@ -1,4 +1,4 @@
-import { Home, Search, Calendar, User, Plus, LayoutDashboard, Utensils, Bell, Shield } from 'lucide-react';
+import { Home, Search, Calendar, User, Plus, LayoutDashboard, Utensils, Bell, Shield, BarChart3 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,7 @@ export default function BottomNav() {
   const organizerItems = [
     { icon: LayoutDashboard, label: 'Hub', path: '/dashboard' },
     { icon: Plus, label: 'Create', path: '/create' },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Bell, label: 'Alerts', path: '/notifications', badge: unreadNotifications },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
